@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Errant 30° 97° - SXSW 2026</title>
+    <link rel="stylesheet" href="styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;900&family=Montserrat:wght@300;400;600&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <header class="header">
+            <h1 class="title">Errant 30° 97°</h1>
+            <p class="subtitle">eastside sprockets</p>
+        </header>
+
+        <!-- Controls Section -->
+        <div class="controls">
+            <!-- File Upload -->
+            <div class="upload-section">
+                <label for="file-upload" class="upload-btn">
+                    <span>📤 Upload Events</span>
+                    <input type="file" id="file-upload" accept=".csv,.xlsx,.xls,.pdf" multiple hidden>
+                </label>
+                <div class="upload-info">CSV, Excel, or PDF</div>
+            </div>
+
+            <!-- Google Sheets Integration -->
+            <div class="sheets-section">
+                <input type="text" id="sheets-url" placeholder="Paste Google Sheets URL..." class="sheets-input">
+                <button id="load-sheets" class="action-btn">Load from Sheets</button>
+            </div>
+
+            <!-- Search and Filters -->
+            <div class="filter-section">
+                <input type="text" id="search-input" placeholder="🔍 Search event name..." class="search-input">
+                
+                <div class="date-filter">
+                    <input type="date" id="date-filter" class="date-input">
+                    <button id="clear-date" class="clear-btn">Clear Date</button>
+                </div>
+
+                <div class="action-buttons">
+                    <button id="view-all" class="action-btn">View All</button>
+                    <button id="export-excel" class="action-btn">Export to Excel</button>
+                    <button id="export-sheets" class="action-btn">Export to Sheets</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Events Display -->
+        <div id="events-container" class="events-container">
+            <div class="empty-state">
+                <p>🎉 Upload your events to get started!</p>
+                <p class="empty-subtitle">CSV, Excel, or Google Sheets</p>
+            </div>
+        </div>
+
+        <!-- Event Count -->
+        <div id="event-count" class="event-count"></div>
+    </div>
+
+    <!-- Event Card Template -->
+    <template id="event-template">
+        <div class="event-card">
+            <div class="event-date-badge">
+                <span class="date-day"></span>
+                <span class="date-month"></span>
+            </div>
+            <div class="event-content">
+                <h3 class="event-name"></h3>
+                <div class="event-details">
+                    <p class="event-time">⏰ <span></span></p>
+                    <p class="event-location">📍 <span></span></p>
+                    <p class="event-vibe">✨ <span></span></p>
+                    <p class="event-cost">💰 <span></span></p>
+                </div>
+                <div class="event-actions">
+                    <a href="#" target="_blank" class="rsvp-btn">
+                        <span class="btn-text">Take Me Thru There</span>
+                        <span class="rsvp-status"></span>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </template>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+    <script src="script.js"></script>
+</body>
+</html>
