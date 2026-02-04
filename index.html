@@ -3,62 +3,55 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Errant 30° 97° - SXSW 2026</title>
+    <title>Knight Errant 30° 97° - SXSW 2026</title>
     <link rel="stylesheet" href="styles.css">
-    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;900&family=Montserrat:wght@300;400;600&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Tangerine:wght@400;700&family=Montserrat:wght@300;400;600&display=swap" rel="stylesheet">
 </head>
 <body>
     <div class="container">
         <!-- Header -->
         <header class="header">
-            <h1 class="title">Errant 30° 97°</h1>
-            <p class="subtitle">eastside sprockets</p>
+            <h1 class="title">Knight Errant 30° 97°</h1>
+            <p class="subtitle">take me thru there</p>
         </header>
 
         <!-- Controls Section -->
         <div class="controls">
-            <!-- File Upload -->
-            <div class="upload-section">
-                <label for="file-upload" class="upload-btn">
-                    <span>📤 Upload Events</span>
-                    <input type="file" id="file-upload" accept=".csv,.xlsx,.xls,.pdf" multiple hidden>
-                </label>
-                <div class="upload-info">CSV, Excel, or PDF</div>
-            </div>
+            <!-- Refresh Button -->
+            <button id="refresh-btn" class="refresh-btn">
+                <span class="refresh-icon">🔄</span>
+                <span class="refresh-text">where we going twin</span>
+            </button>
 
-            <!-- Google Sheets Integration -->
-            <div class="sheets-section">
-                <input type="text" id="sheets-url" placeholder="Paste Google Sheets URL..." class="sheets-input">
-                <button id="load-sheets" class="action-btn">Load from Sheets</button>
-            </div>
-
-            <!-- Search and Filters -->
-            <div class="filter-section">
+            <!-- Search -->
+            <div class="search-section">
                 <input type="text" id="search-input" placeholder="🔍 Search event name..." class="search-input">
                 
                 <div class="date-filter">
                     <input type="date" id="date-filter" class="date-input">
-                    <button id="clear-date" class="clear-btn">Clear Date</button>
-                </div>
-
-                <div class="action-buttons">
-                    <button id="view-all" class="action-btn">View All</button>
-                    <button id="export-excel" class="action-btn">Export to Excel</button>
-                    <button id="export-sheets" class="action-btn">Export to Sheets</button>
+                    <button id="clear-filters" class="filter-btn">Clear Filters</button>
+                    <button id="view-all" class="filter-btn">View All</button>
                 </div>
             </div>
+        </div>
+
+        <!-- Loading State -->
+        <div id="loading-state" class="loading-state">
+            <div class="spinner"></div>
+            <p>Loading events...</p>
         </div>
 
         <!-- Events Display -->
-        <div id="events-container" class="events-container">
-            <div class="empty-state">
-                <p>🎉 Upload your events to get started!</p>
-                <p class="empty-subtitle">CSV, Excel, or Google Sheets</p>
-            </div>
-        </div>
+        <div id="events-container" class="events-container"></div>
 
         <!-- Event Count -->
         <div id="event-count" class="event-count"></div>
+
+        <!-- Export Options (Small, Bottom) -->
+        <div class="export-section">
+            <button id="export-excel" class="export-btn">📥 Excel</button>
+            <button id="export-csv" class="export-btn">📥 CSV</button>
+        </div>
     </div>
 
     <!-- Event Card Template -->
@@ -87,7 +80,6 @@
     </template>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
     <script src="script.js"></script>
 </body>
 </html>

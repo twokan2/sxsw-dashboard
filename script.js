@@ -1,3 +1,6 @@
+// Hardcoded Google Sheets URL
+const GOOGLE_SHEET_URL = 'https://docs.google.com/spreadsheets/d/1xeEYRm302zYQOxs1Mu_hEcnf_XQLeSxJ2-w-uXIgV2A/export?format=csv';
+
 // Global state
 let allEvents = [];
 let filteredEvents = [];
@@ -5,7 +8,7 @@ let rsvpdEvents = new Set();
 
 // Load RSVP'd events from localStorage
 function loadRSVPData() {
-    const saved = localStorage.getItem('sxsw-rsvp-data');
+    const saved = localStorage.getItem('sxsw-rsvp-data-v2');
     if (saved) {
         try {
             rsvpdEvents = new Set(JSON.parse(saved));
@@ -17,85 +20,94 @@ function loadRSVPData() {
 
 // Save RSVP data to localStorage
 function saveRSVPData() {
-    localStorage.setItem('sxsw-rsvp-data', JSON.stringify([...rsvpdEvents]));
+    localStorage.setItem('sxsw-rsvp-data-v2', JSON.stringify([...rsvpdEvents]));
 }
 
 // Initialize
 document.addEventListener('DOMContentLoaded', () => {
     loadRSVPData();
     initializeEventListeners();
+    loadEventsFromSheet();
 });
 
 // Event Listeners
 function initializeEventListeners() {
-    document.getElementById('file-upload').addEventListener('change', handleFileUpload);
-    document.getElementById('load-sheets').addEventListener('click', handleSheetsLoad);
+    document.getElementById('refresh-btn').addEventListener('click', refreshEvents);
     document.getElementById('search-input').addEventListener('input', handleSearch);
     document.getElementById('date-filter').addEventListener('change', handleDateFilter);
-    document.getElementById('clear-date').addEventListener('click', clearDateFilter);
+    document.getElementById('clear-filters').addEventListener('click', clearFilters);
     document.getElementById('view-all').addEventListener('click', viewAll);
     document.getElementById('export-excel').addEventListener('click', exportToExcel);
-    document.getElementById('export-sheets').addEventListener('click', exportToSheets);
+    document.getElementById('export-csv').addEventListener('click', exportToCSV);
 }
 
-// File Upload Handler
-async function handleFileUpload(event) {
-    const files = event.target.files;
-    if (!files.length) return;
-
-    showLoading();
-
-    for (const file of files) {
-        try {
-            if (file.name.endsWith('.csv')) {
-                await parseCSV(file);
-            } else if (file.name.endsWith('.xlsx') || file.name.endsWith('.xls')) {
-                await parseExcel(file);
-            } else if (file.name.endsWith('.pdf')) {
-                await parsePDF(file);
-            }
-        } catch (error) {
-            console.error(`Error parsing ${file.name}:`, error);
-            alert(`Error parsing ${file.name}. Please check the file format.`);
-        }
-    }
-
-    renderEvents();
-    event.target.value = ''; // Reset file input
-}
-
-// Parse CSV
-function parseCSV(file) {
-    return new Promise((resolve, reject) => {
-        const reader = new FileReader();
-        reader.onload = (e) => {
-            try {
-                const text = e.target.result;
-                const lines = text.split('\n');
-                const headers = lines[0].split(',').map(h => h.trim().replace(/"/g, ''));
-                
-                for (let i = 1; i < lines.length; i++) {
-                    if (!lines[i].trim()) continue;
-                    
-                    const values = parseCSVLine(lines[i]);
-                    const event = {};
-                    
-                    headers.forEach((header, index) => {
-                        event[header] = values[index] || '';
-                    });
-                    
-                    if (event['Event Name'] || event['Event name'] || event['event name']) {
-                        allEvents.push(normalizeEvent(event));
-                    }
-                }
-                resolve();
-            } catch (error) {
-                reject(error);
-            }
-        };
-        reader.onerror = reject;
-        reader.readAsText(file);
+// Refresh Events
+function refreshEvents() {
+    const btn = document.getElementById('refresh-btn');
+    const icon = btn.querySelector('.refresh-icon');
+    
+    // Add loading state
+    btn.disabled = true;
+    btn.style.opacity = '0.7';
+    
+    // Clear current events
+    allEvents = [];
+    filteredEvents = [];
+    
+    // Reload from sheet
+    loadEventsFromSheet().then(() => {
+        btn.disabled = false;
+        btn.style.opacity = '1';
+        
+        // Success feedback
+        const originalText = btn.querySelector('.refresh-text').textContent;
+        btn.querySelector('.refresh-text').textContent = 'updated! 🎉';
+        setTimeout(() => {
+            btn.querySelector('.refresh-text').textContent = originalText;
+        }, 2000);
     });
+}
+
+// Load Events from Google Sheet
+async function loadEventsFromSheet() {
+    showLoading();
+    
+    try {
+        const response = await fetch(GOOGLE_SHEET_URL);
+        if (!response.ok) {
+            throw new Error('Failed to load events from Google Sheets');
+        }
+        
+        const text = await response.text();
+        const lines = text.split('\n');
+        const headers = lines[0].split(',').map(h => h.trim().replace(/"/g, ''));
+        
+        allEvents = [];
+        
+        for (let i = 1; i < lines.length; i++) {
+            if (!lines[i].trim()) continue;
+            
+            const values = parseCSVLine(lines[i]);
+            const event = {};
+            
+            headers.forEach((header, index) => {
+                event[header] = values[index] || '';
+            });
+            
+            if (event['Event Name'] || event['Event name'] || event['event name']) {
+                allEvents.push(normalizeEvent(event));
+            }
+        }
+        
+        filteredEvents = [...allEvents];
+        hideLoading();
+        renderEvents();
+        
+    } catch (error) {
+        console.error('Error loading events:', error);
+        hideLoading();
+        showError('Unable to load events. Please try refreshing the page.');
+    }
 }
 
 // Parse CSV line handling quotes
@@ -120,125 +132,18 @@ function parseCSVLine(line) {
     return result;
 }
 
-// Parse Excel
-function parseExcel(file) {
-    return new Promise((resolve, reject) => {
-        const reader = new FileReader();
-        reader.onload = (e) => {
-            try {
-                const data = new Uint8Array(e.target.result);
-                const workbook = XLSX.read(data, { type: 'array' });
-                const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
-                const jsonData = XLSX.utils.sheet_to_json(firstSheet);
-                
-                jsonData.forEach(row => {
-                    if (row['Event Name'] || row['Event name'] || row['event name']) {
-                        allEvents.push(normalizeEvent(row));
-                    }
-                });
-                resolve();
-            } catch (error) {
-                reject(error);
-            }
-        };
-        reader.onerror = reject;
-        reader.readAsArrayBuffer(file);
-    });
-}
-
-// Parse PDF (basic text extraction)
-async function parsePDF(file) {
-    return new Promise((resolve, reject) => {
-        const reader = new FileReader();
-        reader.onload = async (e) => {
-            try {
-                const typedarray = new Uint8Array(e.target.result);
-                const pdf = await pdfjsLib.getDocument(typedarray).promise;
-                
-                let fullText = '';
-                for (let i = 1; i <= pdf.numPages; i++) {
-                    const page = await pdf.getPage(i);
-                    const textContent = await page.getTextContent();
-                    const pageText = textContent.items.map(item => item.str).join(' ');
-                    fullText += pageText + '\n';
-                }
-                
-                // Try to extract structured data from PDF text
-                alert('PDF uploaded. Please note: PDF parsing is basic. For best results, use CSV or Excel files.');
-                resolve();
-            } catch (error) {
-                reject(error);
-            }
-        };
-        reader.onerror = reject;
-        reader.readAsArrayBuffer(file);
-    });
-}
-
 // Normalize event data structure
 function normalizeEvent(rawEvent) {
     return {
         date: rawEvent['Date'] || rawEvent['date'] || '',
         time: rawEvent['Time'] || rawEvent['time'] || 'TBD',
         name: rawEvent['Event Name'] || rawEvent['Event name'] || rawEvent['event name'] || 'Untitled Event',
-        link: rawEvent['Event Link'] || rawEvent['event link'] || rawEvent['Link to Join'] || '#',
-        location: rawEvent['Event Location'] || rawEvent['location'] || 'TBD',
+        link: rawEvent['Event Link'] || rawEvent['event link'] || '#',
+        location: rawEvent['Event Location'] || rawEvent['location'] || rawEvent['Event location'] || 'TBD',
         vibe: rawEvent['Vibe'] || rawEvent['vibe'] || '',
         rsvpLink: rawEvent['Link to Join'] || rawEvent['link to join'] || rawEvent['Event Link'] || rawEvent['event link'] || '#',
         cost: rawEvent['Cost'] || rawEvent['cost'] || 'N/A'
     };
-}
-
-// Google Sheets Handler
-async function handleSheetsLoad() {
-    const url = document.getElementById('sheets-url').value.trim();
-    if (!url) {
-        alert('Please enter a Google Sheets URL');
-        return;
-    }
-
-    try {
-        showLoading();
-        
-        // Extract spreadsheet ID from URL
-        const match = url.match(/\/d\/([a-zA-Z0-9-_]+)/);
-        if (!match) {
-            throw new Error('Invalid Google Sheets URL');
-        }
-        
-        const spreadsheetId = match[1];
-        const csvUrl = `https://docs.google.com/spreadsheets/d/${spreadsheetId}/export?format=csv`;
-        
-        const response = await fetch(csvUrl);
-        if (!response.ok) {
-            throw new Error('Failed to load sheet. Make sure it is publicly accessible.');
-        }
-        
-        const text = await response.text();
-        const lines = text.split('\n');
-        const headers = lines[0].split(',').map(h => h.trim().replace(/"/g, ''));
-        
-        for (let i = 1; i < lines.length; i++) {
-            if (!lines[i].trim()) continue;
-            
-            const values = parseCSVLine(lines[i]);
-            const event = {};
-            
-            headers.forEach((header, index) => {
-                event[header] = values[index] || '';
-            });
-            
-            if (event['Event Name'] || event['Event name'] || event['event name']) {
-                allEvents.push(normalizeEvent(event));
-            }
-        }
-        
-        renderEvents();
-        alert('Events loaded from Google Sheets!');
-    } catch (error) {
-        console.error('Error loading Google Sheets:', error);
-        alert('Error loading Google Sheets. Make sure the sheet is publicly accessible (Anyone with the link can view).');
-    }
 }
 
 // Parse and format date
@@ -280,7 +185,7 @@ function formatDate(dateStr) {
 
 // Format cost
 function formatCost(costStr) {
-    if (!costStr || costStr.trim() === '') return 'N/A';
+    if (!costStr || costStr.trim() === '' || costStr === 'N/A') return 'N/A';
     
     const lower = costStr.toLowerCase();
     if (lower.includes('free') || lower === '$0' || lower === '0') {
@@ -298,7 +203,9 @@ function handleSearch(event) {
         filteredEvents = [...allEvents];
     } else {
         filteredEvents = allEvents.filter(event => 
-            event.name.toLowerCase().includes(query)
+            event.name.toLowerCase().includes(query) ||
+            (event.vibe && event.vibe.toLowerCase().includes(query)) ||
+            (event.location && event.location.toLowerCase().includes(query))
         );
     }
     
@@ -323,8 +230,9 @@ function handleDateFilter(event) {
     renderEvents();
 }
 
-// Clear Date Filter
-function clearDateFilter() {
+// Clear Filters
+function clearFilters() {
+    document.getElementById('search-input').value = '';
     document.getElementById('date-filter').value = '';
     filteredEvents = [...allEvents];
     renderEvents();
@@ -332,10 +240,7 @@ function clearDateFilter() {
 
 // View All
 function viewAll() {
-    document.getElementById('search-input').value = '';
-    document.getElementById('date-filter').value = '';
-    filteredEvents = [...allEvents];
-    renderEvents();
+    clearFilters();
 }
 
 // Render Events
@@ -345,9 +250,9 @@ function renderEvents() {
     
     if (eventsToShow.length === 0) {
         container.innerHTML = `
-            <div class="empty-state">
-                <p>🎉 Upload your events to get started!</p>
-                <p class="empty-subtitle">CSV, Excel, or Google Sheets</p>
+            <div style="grid-column: 1 / -1; text-align: center; padding: 60px 20px; background: rgba(61, 37, 100, 0.7); border-radius: 15px; border: 2px dashed #6b4f9b;">
+                <p style="font-size: 1.3rem; margin-bottom: 10px;">🎉 No events loaded yet</p>
+                <p style="font-size: 1rem; opacity: 0.7;">Click "where we going twin" to load events</p>
             </div>
         `;
         updateEventCount(0);
@@ -410,7 +315,12 @@ function updateEventCount(count) {
     if (count === 0) {
         countEl.textContent = '';
     } else {
-        countEl.textContent = `Showing ${count} event${count !== 1 ? 's' : ''}`;
+        const totalCount = allEvents.length;
+        if (count === totalCount) {
+            countEl.textContent = `Showing all ${count} event${count !== 1 ? 's' : ''}`;
+        } else {
+            countEl.textContent = `Showing ${count} of ${totalCount} events`;
+        }
     }
 }
 
@@ -435,11 +345,11 @@ function exportToExcel() {
     const ws = XLSX.utils.json_to_sheet(exportData);
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, "SXSW Events");
-    XLSX.writeFile(wb, "sxsw-events-errant.xlsx");
+    XLSX.writeFile(wb, "knight-errant-sxsw-2026.xlsx");
 }
 
-// Export to Google Sheets (opens new sheet with data)
-function exportToSheets() {
+// Export to CSV
+function exportToCSV() {
     if (allEvents.length === 0) {
         alert('No events to export');
         return;
@@ -466,18 +376,33 @@ function exportToSheets() {
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = 'sxsw-events-errant.csv';
+    a.download = 'knight-errant-sxsw-2026.csv';
     a.click();
     URL.revokeObjectURL(url);
-    
-    alert('CSV downloaded! Upload this file to Google Sheets to create a new sheet.');
 }
 
 // Show Loading
 function showLoading() {
-    const container = document.getElementById('events-container');
-    container.innerHTML = '<div class="empty-state loading"><p>Loading events...</p></div>';
+    document.getElementById('loading-state').classList.add('active');
+    document.getElementById('events-container').style.display = 'none';
 }
 
-// Initialize PDF.js
-pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+// Hide Loading
+function hideLoading() {
+    document.getElementById('loading-state').classList.remove('active');
+    document.getElementById('events-container').style.display = 'grid';
+}
+
+// Show Error
+function showError(message) {
+    const container = document.getElementById('events-container');
+    container.style.display = 'grid';
+    container.innerHTML = `
+        <div style="grid-column: 1 / -1; text-align: center; padding: 60px 20px; background: rgba(61, 37, 100, 0.7); border-radius: 15px; border: 2px solid rgba(255, 20, 147, 0.5);">
+            <p style="font-size: 1.3rem; margin-bottom: 10px; color: #ff1493;">⚠️ ${message}</p>
+            <button onclick="location.reload()" style="margin-top: 20px; padding: 12px 30px; background: linear-gradient(135deg, #ff1493, #ff00ff); color: white; border: none; border-radius: 25px; cursor: pointer; font-weight: 600; font-size: 1rem;">
+                Refresh Page
+            </button>
+        </div>
+    `;
+}
