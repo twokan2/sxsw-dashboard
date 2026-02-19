@@ -4,30 +4,44 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>The Errant — ATX</title>
-    <meta name="description" content="SXSW 2026 — take me thru there">
-    <meta name="theme-color" content="#06020f">
+    <meta name="description" content="SXSW 2026 — All Together Now">
+    <meta name="theme-color" content="#0a1a12">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Tangerine:wght@400;700&family=Montserrat:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Tangerine:wght@400;700&family=Aptos:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-    <!-- Starfield canvas -->
     <canvas id="starfield"></canvas>
 
+    <!-- Background music — commit a file named "vibe.mp3" to your repo -->
+    <audio id="bgMusic" loop preload="none">
+        <source src="vibe.mp3" type="audio/mpeg">
+    </audio>
+
     <div class="page-wrapper">
-        <!-- Header -->
         <header class="site-header">
             <div class="header-accent"></div>
             <div class="header-content">
-                <p class="header-pre">sxsw · march 12–18 · austin tx</p>
+                <p class="header-pre">sxsw 2026 · march 12–18 · austin tx</p>
                 <h1 class="site-title">The Errant — ATX</h1>
                 <p class="site-subtitle">take me thru there</p>
+                <p class="header-tagline">all together now</p>
+
+                <button class="music-toggle" id="musicToggle" title="Play / Pause vibes" aria-label="Toggle background music">
+                    <svg class="music-icon-off" id="musicIconOff" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                        <path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/>
+                        <line x1="3" y1="3" x2="21" y2="21" stroke-width="2" stroke-linecap="round"/>
+                    </svg>
+                    <svg class="music-icon-on" id="musicIconOn" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="display:none">
+                        <path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/>
+                    </svg>
+                    <span class="music-label" id="musicLabel">play vibes</span>
+                </button>
             </div>
             <div class="header-accent"></div>
         </header>
 
-        <!-- Controls -->
         <section class="controls">
             <div class="controls-row">
                 <div class="search-wrapper">
@@ -35,47 +49,32 @@
                     <input type="text" id="searchInput" placeholder="search vibes, venues, events..." autocomplete="off">
                 </div>
                 <input type="date" id="dateFilter" title="Filter by date">
+                <button id="refreshBtn" class="btn-refresh" title="Refresh events">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.3M22 12.5a10 10 0 0 1-18.8 4.2"/></svg>
+                    load the lineup
+                </button>
             </div>
             <div class="controls-row controls-actions">
                 <div class="vibe-filters" id="vibeFilters"></div>
                 <div class="action-btns">
                     <button id="clearFilters" class="btn-ghost">wipe it</button>
                     <button id="viewAll" class="btn-ghost">show all</button>
-                    <button id="refreshBtn" class="btn-pill">
-                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.3M22 12.5a10 10 0 0 1-18.8 4.2"/></svg>
-                        the prelude
-                    </button>
                 </div>
             </div>
         </section>
 
-        <!-- Stats bar -->
         <section class="stats-bar">
-            <div class="stat">
-                <span class="stat-num" id="totalEvents">—</span>
-                <span class="stat-label">events</span>
-            </div>
+            <div class="stat"><span class="stat-num" id="totalEvents">—</span><span class="stat-label">events</span></div>
             <div class="stat-divider">✦</div>
-            <div class="stat">
-                <span class="stat-num" id="freeEvents">—</span>
-                <span class="stat-label">free</span>
-            </div>
+            <div class="stat"><span class="stat-num" id="freeEvents">—</span><span class="stat-label">free</span></div>
             <div class="stat-divider">✦</div>
-            <div class="stat">
-                <span class="stat-num" id="rsvpCount">—</span>
-                <span class="stat-label">locked in</span>
-            </div>
+            <div class="stat"><span class="stat-num" id="rsvpCount">—</span><span class="stat-label">locked in</span></div>
             <div class="stat-divider">✦</div>
-            <div class="stat">
-                <span class="stat-num" id="daysUntil">—</span>
-                <span class="stat-label">days out</span>
-            </div>
+            <div class="stat"><span class="stat-num" id="daysUntil">—</span><span class="stat-label">days out</span></div>
         </section>
 
-        <!-- Date navigation -->
         <nav class="date-nav" id="dateNav"></nav>
 
-        <!-- Events grid -->
         <main class="events-grid" id="eventsGrid">
             <div class="loading-state" id="loadingState">
                 <div class="loader"></div>
@@ -83,34 +82,25 @@
             </div>
         </main>
 
-        <!-- Error state -->
         <div class="error-state" id="errorState" style="display:none;">
-            <p class="error-emoji">⚡</p>
+            <p class="state-emoji">⚡</p>
             <p class="error-msg" id="errorMsg">Can't reach the sheet right now.</p>
-            <button class="btn-pill" onclick="loadEvents()">run it back</button>
+            <button class="btn-refresh" onclick="loadEvents()">run it back</button>
         </div>
 
-        <!-- Empty state -->
         <div class="empty-state" id="emptyState" style="display:none;">
-            <p class="empty-emoji">🌙</p>
+            <p class="state-emoji">🌙</p>
             <p>nothing matches — try a different vibe</p>
             <button class="btn-ghost" onclick="clearAllFilters()">wipe it</button>
         </div>
 
-        <!-- Footer -->
         <footer class="site-footer">
             <div class="footer-actions">
-                <button class="btn-export" id="exportExcel">
-                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-                    xlsx
-                </button>
-                <button class="btn-export" id="exportCSV">
-                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-                    csv
-                </button>
+                <button class="btn-export" id="exportExcel"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg> xlsx</button>
+                <button class="btn-export" id="exportCSV"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg> csv</button>
             </div>
             <div class="footer-meta">
-                <p>the errant — atx · sxsw 2026</p>
+                <p>the errant — atx · all together now · sxsw 2026</p>
                 <p class="footer-sub">events via <a href="https://rsvpatx.com/" target="_blank" rel="noopener">rsvpatx.com</a></p>
             </div>
         </footer>
