@@ -3,83 +3,120 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Knight Errant 30° 97° - SXSW 2026</title>
+    <title>The Errant — ATX</title>
+    <meta name="description" content="SXSW 2026 — take me thru there">
+    <meta name="theme-color" content="#06020f">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Tangerine:wght@400;700&family=Montserrat:wght@300;400;500;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="styles.css">
-    <link href="https://fonts.googleapis.com/css2?family=Tangerine:wght@400;700&family=Montserrat:wght@300;400;600&display=swap" rel="stylesheet">
 </head>
 <body>
-    <div class="container">
+    <!-- Starfield canvas -->
+    <canvas id="starfield"></canvas>
+
+    <div class="page-wrapper">
         <!-- Header -->
-        <header class="header">
-            <h1 class="title">Knight Errant 30° 97°</h1>
-            <p class="subtitle">take me thru there</p>
+        <header class="site-header">
+            <div class="header-accent"></div>
+            <div class="header-content">
+                <p class="header-pre">sxsw · march 12–18 · austin tx</p>
+                <h1 class="site-title">The Errant — ATX</h1>
+                <p class="site-subtitle">take me thru there</p>
+            </div>
+            <div class="header-accent"></div>
         </header>
 
-        <!-- Controls Section -->
-        <div class="controls">
-            <!-- Refresh Button -->
-            <button id="refresh-btn" class="refresh-btn">
-                <span class="refresh-icon">🔄</span>
-                <span class="refresh-text">where we going twin</span>
-            </button>
-
-            <!-- Search -->
-            <div class="search-section">
-                <input type="text" id="search-input" placeholder="🔍 Search event name..." class="search-input">
-                
-                <div class="date-filter">
-                    <input type="date" id="date-filter" class="date-input">
-                    <button id="clear-filters" class="filter-btn">Clear Filters</button>
-                    <button id="view-all" class="filter-btn">View All</button>
+        <!-- Controls -->
+        <section class="controls">
+            <div class="controls-row">
+                <div class="search-wrapper">
+                    <svg class="search-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+                    <input type="text" id="searchInput" placeholder="search vibes, venues, events..." autocomplete="off">
+                </div>
+                <input type="date" id="dateFilter" title="Filter by date">
+            </div>
+            <div class="controls-row controls-actions">
+                <div class="vibe-filters" id="vibeFilters"></div>
+                <div class="action-btns">
+                    <button id="clearFilters" class="btn-ghost">wipe it</button>
+                    <button id="viewAll" class="btn-ghost">show all</button>
+                    <button id="refreshBtn" class="btn-pill">
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.3M22 12.5a10 10 0 0 1-18.8 4.2"/></svg>
+                        the prelude
+                    </button>
                 </div>
             </div>
+        </section>
+
+        <!-- Stats bar -->
+        <section class="stats-bar">
+            <div class="stat">
+                <span class="stat-num" id="totalEvents">—</span>
+                <span class="stat-label">events</span>
+            </div>
+            <div class="stat-divider">✦</div>
+            <div class="stat">
+                <span class="stat-num" id="freeEvents">—</span>
+                <span class="stat-label">free</span>
+            </div>
+            <div class="stat-divider">✦</div>
+            <div class="stat">
+                <span class="stat-num" id="rsvpCount">—</span>
+                <span class="stat-label">locked in</span>
+            </div>
+            <div class="stat-divider">✦</div>
+            <div class="stat">
+                <span class="stat-num" id="daysUntil">—</span>
+                <span class="stat-label">days out</span>
+            </div>
+        </section>
+
+        <!-- Date navigation -->
+        <nav class="date-nav" id="dateNav"></nav>
+
+        <!-- Events grid -->
+        <main class="events-grid" id="eventsGrid">
+            <div class="loading-state" id="loadingState">
+                <div class="loader"></div>
+                <p>pulling up the vibes...</p>
+            </div>
+        </main>
+
+        <!-- Error state -->
+        <div class="error-state" id="errorState" style="display:none;">
+            <p class="error-emoji">⚡</p>
+            <p class="error-msg" id="errorMsg">Can't reach the sheet right now.</p>
+            <button class="btn-pill" onclick="loadEvents()">run it back</button>
         </div>
 
-        <!-- Loading State -->
-        <div id="loading-state" class="loading-state">
-            <div class="spinner"></div>
-            <p>Loading events...</p>
+        <!-- Empty state -->
+        <div class="empty-state" id="emptyState" style="display:none;">
+            <p class="empty-emoji">🌙</p>
+            <p>nothing matches — try a different vibe</p>
+            <button class="btn-ghost" onclick="clearAllFilters()">wipe it</button>
         </div>
 
-        <!-- Events Display -->
-        <div id="events-container" class="events-container"></div>
-
-        <!-- Event Count -->
-        <div id="event-count" class="event-count"></div>
-
-        <!-- Export Options (Small, Bottom) -->
-        <div class="export-section">
-            <button id="export-excel" class="export-btn">📥 Excel</button>
-            <button id="export-csv" class="export-btn">📥 CSV</button>
-        </div>
+        <!-- Footer -->
+        <footer class="site-footer">
+            <div class="footer-actions">
+                <button class="btn-export" id="exportExcel">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                    xlsx
+                </button>
+                <button class="btn-export" id="exportCSV">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                    csv
+                </button>
+            </div>
+            <div class="footer-meta">
+                <p>the errant — atx · sxsw 2026</p>
+                <p class="footer-sub">events via <a href="https://rsvpatx.com/" target="_blank" rel="noopener">rsvpatx.com</a></p>
+            </div>
+        </footer>
     </div>
 
-    <!-- Event Card Template -->
-    <template id="event-template">
-        <div class="event-card">
-            <div class="event-date-badge">
-                <span class="date-day"></span>
-                <span class="date-month"></span>
-            </div>
-            <div class="event-content">
-                <h3 class="event-name"></h3>
-                <div class="event-details">
-                    <p class="event-time">⏰ <span></span></p>
-                    <p class="event-location">📍 <span></span></p>
-                    <p class="event-vibe">✨ <span></span></p>
-                    <p class="event-cost">💰 <span></span></p>
-                </div>
-                <div class="event-actions">
-                    <a href="#" target="_blank" class="rsvp-btn">
-                        <span class="btn-text">Take Me Thru There</span>
-                        <span class="rsvp-status"></span>
-                    </a>
-                </div>
-            </div>
-        </div>
-    </template>
-
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
     <script src="script.js"></script>
 </body>
 </html>
