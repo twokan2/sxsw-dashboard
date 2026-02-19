@@ -1,31 +1,31 @@
 /* ============================
-   THE ERRANT — ATX · V6
+   THE ERRANT — ATX · V7
    SXSW 2026 · All Together Now
+   White bg + SXSW palette
    ============================ */
 
 *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
 
 :root {
-    --bg-deep: #0a1a12;
-    --bg-card: #0f231a;
-    --bg-card-hover: #142e22;
-    --bg-surface: #122820;
-    --border-subtle: rgba(255, 255, 255, 0.07);
-    --border-glow: rgba(74, 222, 128, 0.2);
+    /* SXSW Palette */
+    --sx-dark:   #001e1e;
+    --sx-green:  #59be79;
+    --sx-gray:   #b1b6ba;
+    --sx-blue:   #50afe8;
+    --sx-orange: #f97c3c;
 
-    --green: #4ade80;
-    --green-soft: rgba(74, 222, 128, 0.1);
-    --green-glow: rgba(74, 222, 128, 0.3);
+    /* Light theme surfaces */
+    --bg-page: #ffffff;
+    --bg-card: #f8f9fa;
+    --bg-card-hover: #f0f4f3;
+    --border: #e2e6e9;
+    --border-hover: #c5cdd3;
 
-    --gold: #f59e0b;
-    --gold-soft: rgba(245, 158, 11, 0.1);
-
-    --periwinkle: #818cf8;
-    --periwinkle-soft: rgba(129, 140, 248, 0.1);
-
-    --text-primary: #f0f7f4;
-    --text-secondary: #94b8a4;
-    --text-muted: #5a7d69;
+    /* Text */
+    --text-primary: var(--sx-dark);
+    --text-secondary: #3d5a5a;
+    --text-muted: #7d9494;
+    --text-light: #a3b5b5;
 
     --radius-sm: 8px;
     --radius-md: 14px;
@@ -38,30 +38,31 @@ html { font-size: 16px; -webkit-font-smoothing: antialiased; scroll-behavior: sm
 body {
     font-family: 'Aptos', -apple-system, 'Segoe UI', sans-serif;
     font-weight: 400;
-    background: var(--bg-deep);
+    background: var(--bg-page);
     color: var(--text-primary);
     min-height: 100vh;
     overflow-x: hidden;
     line-height: 1.6;
 }
 
-a { color: var(--green); text-decoration: none; transition: color 0.2s; }
-a:hover { color: var(--gold); }
+a { color: var(--sx-blue); text-decoration: none; transition: color 0.2s; }
+a:hover { color: var(--sx-orange); }
 
-/* --- Starfield --- */
-#starfield { position: fixed; inset: 0; z-index: 0; pointer-events: none; }
+/* --- Starfield (hidden on light) --- */
+#starfield { display: none; }
 
 /* --- Page Wrapper --- */
-.page-wrapper { position: relative; z-index: 2; max-width: 1200px; margin: 0 auto; padding: 40px 20px 60px; }
+.page-wrapper { position: relative; max-width: 1200px; margin: 0 auto; padding: 40px 20px 60px; }
 
 /* --- Header --- */
-.site-header { text-align: center; margin-bottom: 48px; animation: fadeUp 1s var(--ease-out) both; }
+.site-header { text-align: center; margin-bottom: 48px; animation: fadeUp 0.8s var(--ease-out) both; }
 
 .header-accent {
-    height: 1px;
+    height: 3px;
     max-width: 500px;
     margin: 0 auto;
-    background: linear-gradient(90deg, transparent, var(--green-soft) 20%, var(--green-glow) 50%, var(--green-soft) 80%, transparent);
+    border-radius: 2px;
+    background: linear-gradient(90deg, var(--sx-green), var(--sx-blue), var(--sx-orange));
 }
 
 .header-content { padding: 32px 0; }
@@ -80,11 +81,7 @@ a:hover { color: var(--gold); }
     font-weight: 700;
     font-size: clamp(4rem, 12vw, 7.5rem);
     line-height: 1;
-    background: linear-gradient(135deg, #fff 0%, var(--green) 60%, var(--gold) 100%);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-    filter: drop-shadow(0 0 30px rgba(74, 222, 128, 0.12));
+    color: var(--sx-dark);
     padding: 0 10px;
 }
 
@@ -94,8 +91,7 @@ a:hover { color: var(--gold); }
     font-weight: 500;
     letter-spacing: 0.3em;
     text-transform: lowercase;
-    color: var(--text-secondary);
-    opacity: 0.8;
+    color: var(--text-muted);
 }
 
 /* All Together Now tagline */
@@ -105,9 +101,7 @@ a:hover { color: var(--gold); }
     font-weight: 700;
     letter-spacing: 0.5em;
     text-transform: uppercase;
-    color: var(--green);
-    opacity: 0.5;
-    position: relative;
+    color: var(--sx-orange);
     display: inline-block;
 }
 .header-tagline::before,
@@ -115,7 +109,7 @@ a:hover { color: var(--gold); }
     content: '—';
     margin: 0 10px;
     opacity: 0.3;
-    color: var(--text-muted);
+    color: var(--sx-gray);
 }
 
 /* --- Music Toggle --- */
@@ -125,8 +119,8 @@ a:hover { color: var(--gold); }
     gap: 6px;
     margin-top: 22px;
     padding: 7px 18px;
-    background: rgba(255,255,255,0.03);
-    border: 1px solid var(--border-subtle);
+    background: var(--bg-card);
+    border: 1px solid var(--border);
     border-radius: var(--radius-pill);
     color: var(--text-muted);
     font-family: 'Aptos', sans-serif;
@@ -137,23 +131,19 @@ a:hover { color: var(--gold); }
     cursor: pointer;
     transition: all 0.3s var(--ease-out);
 }
-.music-toggle:hover { border-color: var(--green); color: var(--text-secondary); }
-.music-toggle.playing { border-color: var(--green); color: var(--green); background: var(--green-soft); }
-.music-toggle.playing .music-label { color: var(--green); }
+.music-toggle:hover { border-color: var(--sx-green); color: var(--text-secondary); }
+.music-toggle.playing { border-color: var(--sx-green); color: var(--sx-green); background: rgba(89,190,121,0.08); }
 .music-toggle svg { flex-shrink: 0; }
 
-/* Equalizer bars animation when playing */
 .music-toggle.playing::after {
     content: '';
     display: inline-block;
-    width: 14px;
-    height: 10px;
-    margin-left: 4px;
+    width: 14px; height: 10px; margin-left: 4px;
     background:
-        linear-gradient(var(--green), var(--green)) 0 100% / 2px 40% no-repeat,
-        linear-gradient(var(--green), var(--green)) 4px 100% / 2px 70% no-repeat,
-        linear-gradient(var(--green), var(--green)) 8px 100% / 2px 50% no-repeat,
-        linear-gradient(var(--green), var(--green)) 12px 100% / 2px 90% no-repeat;
+        linear-gradient(var(--sx-green), var(--sx-green)) 0 100% / 2px 40% no-repeat,
+        linear-gradient(var(--sx-green), var(--sx-green)) 4px 100% / 2px 70% no-repeat,
+        linear-gradient(var(--sx-green), var(--sx-green)) 8px 100% / 2px 50% no-repeat,
+        linear-gradient(var(--sx-green), var(--sx-green)) 12px 100% / 2px 90% no-repeat;
     animation: eq 0.8s ease-in-out infinite alternate;
 }
 @keyframes eq {
@@ -165,19 +155,17 @@ a:hover { color: var(--gold); }
 }
 
 /* --- Controls --- */
-.controls { margin-bottom: 24px; animation: fadeUp 1s var(--ease-out) 0.1s both; }
-
+.controls { margin-bottom: 24px; animation: fadeUp 0.8s var(--ease-out) 0.1s both; }
 .controls-row { display: flex; gap: 10px; margin-bottom: 12px; flex-wrap: wrap; }
 
 .search-wrapper { flex: 1; position: relative; min-width: 180px; }
-
-.search-icon { position: absolute; left: 14px; top: 50%; transform: translateY(-50%); color: var(--text-muted); pointer-events: none; }
+.search-icon { position: absolute; left: 14px; top: 50%; transform: translateY(-50%); color: var(--text-light); pointer-events: none; }
 
 #searchInput {
     width: 100%;
     padding: 11px 14px 11px 40px;
     background: var(--bg-card);
-    border: 1px solid var(--border-subtle);
+    border: 1px solid var(--border);
     border-radius: var(--radius-sm);
     color: var(--text-primary);
     font-family: 'Aptos', sans-serif;
@@ -185,13 +173,13 @@ a:hover { color: var(--gold); }
     transition: border-color 0.3s, box-shadow 0.3s;
     outline: none;
 }
-#searchInput:focus { border-color: var(--green); box-shadow: 0 0 0 3px var(--green-soft); }
-#searchInput::placeholder { color: var(--text-muted); }
+#searchInput:focus { border-color: var(--sx-blue); box-shadow: 0 0 0 3px rgba(80,175,232,0.12); }
+#searchInput::placeholder { color: var(--text-light); }
 
 #dateFilter {
     padding: 11px 14px;
     background: var(--bg-card);
-    border: 1px solid var(--border-subtle);
+    border: 1px solid var(--border);
     border-radius: var(--radius-sm);
     color: var(--text-primary);
     font-family: 'Aptos', sans-serif;
@@ -200,17 +188,16 @@ a:hover { color: var(--gold); }
     cursor: pointer;
     min-width: 140px;
     transition: border-color 0.3s;
-    color-scheme: dark;
 }
-#dateFilter:focus { border-color: var(--green); }
+#dateFilter:focus { border-color: var(--sx-blue); }
 
-/* Load the Lineup — refresh button */
+/* Load the Lineup button — uses SXSW orange */
 .btn-refresh {
     padding: 10px 24px;
-    background: var(--green);
+    background: var(--sx-orange);
     border: none;
     border-radius: var(--radius-pill);
-    color: var(--bg-deep);
+    color: #fff;
     font-family: 'Aptos', sans-serif;
     font-size: 0.75rem;
     font-weight: 700;
@@ -221,23 +208,22 @@ a:hover { color: var(--gold); }
     align-items: center;
     gap: 7px;
     white-space: nowrap;
-    box-shadow: 0 0 20px rgba(74, 222, 128, 0.2);
+    box-shadow: 0 2px 12px rgba(249,124,60,0.2);
 }
 .btn-refresh:hover {
-    background: #6ee7a0;
+    background: #e86a28;
     transform: translateY(-2px);
-    box-shadow: 0 4px 28px rgba(74, 222, 128, 0.35);
+    box-shadow: 0 4px 20px rgba(249,124,60,0.3);
 }
-.btn-refresh svg { stroke: var(--bg-deep); }
+.btn-refresh svg { stroke: #fff; }
 
 .controls-actions { display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 10px; }
-
 .vibe-filters { display: flex; flex-wrap: wrap; gap: 6px; }
 
 .vibe-btn {
     padding: 6px 16px;
     background: transparent;
-    border: 1px solid var(--border-subtle);
+    border: 1px solid var(--border);
     border-radius: var(--radius-pill);
     color: var(--text-muted);
     font-family: 'Aptos', sans-serif;
@@ -249,15 +235,15 @@ a:hover { color: var(--gold); }
     transition: all 0.3s var(--ease-out);
     white-space: nowrap;
 }
-.vibe-btn:hover { border-color: var(--green); color: var(--text-secondary); }
-.vibe-btn.active { background: var(--green-soft); border-color: var(--green); color: var(--green); }
+.vibe-btn:hover { border-color: var(--sx-blue); color: var(--text-secondary); }
+.vibe-btn.active { background: rgba(80,175,232,0.1); border-color: var(--sx-blue); color: var(--sx-blue); }
 
 .action-btns { display: flex; gap: 8px; flex-shrink: 0; }
 
 .btn-ghost {
     padding: 6px 16px;
     background: transparent;
-    border: 1px solid var(--border-subtle);
+    border: 1px solid var(--border);
     border-radius: var(--radius-sm);
     color: var(--text-muted);
     font-family: 'Aptos', sans-serif;
@@ -271,31 +257,34 @@ a:hover { color: var(--gold); }
 /* --- Stats Bar --- */
 .stats-bar {
     display: flex; justify-content: center; align-items: center; gap: 24px;
-    padding: 18px 0; margin-bottom: 20px;
-    animation: fadeUp 1s var(--ease-out) 0.15s both;
+    padding: 20px 0; margin-bottom: 20px;
+    background: var(--bg-card);
+    border-radius: var(--radius-md);
+    border: 1px solid var(--border);
+    animation: fadeUp 0.8s var(--ease-out) 0.15s both;
 }
 .stat { display: flex; flex-direction: column; align-items: center; gap: 3px; }
-.stat-num { font-family: 'Tangerine', cursive; font-size: 2.2rem; font-weight: 700; color: var(--text-primary); line-height: 1; }
+.stat-num { font-family: 'Tangerine', cursive; font-size: 2.2rem; font-weight: 700; color: var(--sx-dark); line-height: 1; }
 .stat-label { font-size: 0.6rem; font-weight: 600; letter-spacing: 0.18em; text-transform: uppercase; color: var(--text-muted); }
-.stat-divider { color: var(--green); font-size: 0.5rem; opacity: 0.35; }
+.stat-divider { color: var(--sx-orange); font-size: 0.6rem; opacity: 0.4; }
 
 /* --- Date Navigation --- */
 .date-nav {
     display: flex; gap: 6px; overflow-x: auto; padding: 0 0 16px; margin-bottom: 24px;
-    scrollbar-width: none; animation: fadeUp 1s var(--ease-out) 0.2s both;
+    scrollbar-width: none; animation: fadeUp 0.8s var(--ease-out) 0.2s both;
 }
 .date-nav::-webkit-scrollbar { display: none; }
 
 .date-chip {
     flex-shrink: 0; padding: 8px 18px;
-    background: var(--bg-card); border: 1px solid var(--border-subtle);
+    background: var(--bg-card); border: 1px solid var(--border);
     border-radius: var(--radius-pill); color: var(--text-muted);
     font-family: 'Aptos', sans-serif; font-size: 0.7rem; font-weight: 500;
     cursor: pointer; transition: all 0.3s var(--ease-out);
     display: flex; align-items: center; gap: 7px; white-space: nowrap;
 }
-.date-chip:hover { border-color: var(--green); color: var(--text-secondary); }
-.date-chip.active { background: var(--green-soft); border-color: var(--green); color: var(--green); }
+.date-chip:hover { border-color: var(--sx-green); color: var(--text-secondary); }
+.date-chip.active { background: rgba(89,190,121,0.1); border-color: var(--sx-green); color: var(--sx-green); font-weight: 600; }
 .date-chip-count { font-size: 0.6rem; opacity: 0.5; }
 
 /* --- Events Grid --- */
@@ -303,71 +292,93 @@ a:hover { color: var(--gold); }
 
 /* --- Event Card --- */
 .event-card {
-    display: flex; background: var(--bg-card);
-    border: 1px solid var(--border-subtle); border-radius: var(--radius-md);
-    overflow: hidden; transition: all 0.4s var(--ease-out);
-    animation: cardIn 0.6s var(--ease-out) both; position: relative;
-}
-.event-card::after {
-    content: ''; position: absolute; inset: 0; border-radius: var(--radius-md);
-    opacity: 0; background: radial-gradient(ellipse at top left, var(--green-soft), transparent 60%);
-    transition: opacity 0.4s; pointer-events: none;
+    display: flex;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    overflow: hidden;
+    transition: all 0.4s var(--ease-out);
+    animation: cardIn 0.5s var(--ease-out) both;
 }
 .event-card:hover {
-    border-color: var(--border-glow); transform: translateY(-3px);
-    box-shadow: 0 10px 36px rgba(74, 222, 128, 0.06);
+    border-color: var(--border-hover);
+    transform: translateY(-3px);
+    box-shadow: 0 8px 28px rgba(0,30,30,0.06);
 }
-.event-card:hover::after { opacity: 1; }
 
+/* Color-coded left strip — cycles through SXSW colors */
 .card-date-strip {
     display: flex; flex-direction: column; align-items: center; justify-content: center;
-    padding: 16px 14px; background: rgba(255,255,255,0.015);
-    border-right: 1px solid var(--border-subtle); min-width: 58px; gap: 2px;
+    padding: 16px 14px;
+    border-right: 1px solid var(--border);
+    min-width: 58px; gap: 2px;
 }
+
+/* Cycle colors by card index (set via JS) */
+.event-card[data-color="green"] .card-date-strip  { background: rgba(89,190,121,0.08); }
+.event-card[data-color="blue"] .card-date-strip   { background: rgba(80,175,232,0.08); }
+.event-card[data-color="orange"] .card-date-strip  { background: rgba(249,124,60,0.08); }
+.event-card[data-color="gray"] .card-date-strip    { background: rgba(177,182,186,0.1); }
+.event-card[data-color="dark"] .card-date-strip    { background: rgba(0,30,30,0.04); }
+
+.event-card[data-color="green"] .card-date-num  { color: var(--sx-green); }
+.event-card[data-color="blue"] .card-date-num   { color: var(--sx-blue); }
+.event-card[data-color="orange"] .card-date-num  { color: var(--sx-orange); }
+.event-card[data-color="gray"] .card-date-num    { color: var(--sx-gray); }
+.event-card[data-color="dark"] .card-date-num    { color: var(--sx-dark); }
+
 .card-day { font-size: 0.58rem; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase; color: var(--text-muted); }
-.card-date-num { font-family: 'Tangerine', cursive; font-size: 2rem; font-weight: 700; color: var(--text-primary); line-height: 1; }
+.card-date-num { font-family: 'Tangerine', cursive; font-size: 2rem; font-weight: 700; color: var(--sx-dark); line-height: 1; }
 
-.card-body { flex: 1; padding: 16px 18px; display: flex; flex-direction: column; gap: 10px; position: relative; z-index: 1; }
+.card-body { flex: 1; padding: 16px 18px; display: flex; flex-direction: column; gap: 10px; }
 
+/* Vibe tags cycle SXSW colors too */
 .card-vibe-tag {
     display: inline-flex; align-self: flex-start; padding: 3px 12px;
-    background: var(--green-soft); border: 1px solid rgba(74,222,128,0.08);
-    border-radius: var(--radius-pill); font-size: 0.58rem; font-weight: 600;
-    letter-spacing: 0.1em; text-transform: uppercase; color: var(--green);
+    border-radius: var(--radius-pill);
+    font-size: 0.58rem; font-weight: 600;
+    letter-spacing: 0.1em; text-transform: uppercase;
 }
+.event-card[data-color="green"] .card-vibe-tag  { background: rgba(89,190,121,0.1); color: #3a9b58; border: 1px solid rgba(89,190,121,0.15); }
+.event-card[data-color="blue"] .card-vibe-tag   { background: rgba(80,175,232,0.1); color: #3090c8; border: 1px solid rgba(80,175,232,0.15); }
+.event-card[data-color="orange"] .card-vibe-tag  { background: rgba(249,124,60,0.1); color: #d9621e; border: 1px solid rgba(249,124,60,0.15); }
+.event-card[data-color="gray"] .card-vibe-tag    { background: rgba(177,182,186,0.12); color: #6a7278; border: 1px solid rgba(177,182,186,0.2); }
+.event-card[data-color="dark"] .card-vibe-tag    { background: rgba(0,30,30,0.05); color: var(--sx-dark); border: 1px solid rgba(0,30,30,0.1); }
 
 .card-title { font-size: 1rem; font-weight: 600; line-height: 1.35; color: var(--text-primary); }
 
 .card-details { display: flex; flex-direction: column; gap: 5px; }
 .card-detail { display: flex; align-items: flex-start; gap: 8px; font-size: 0.76rem; color: var(--text-secondary); line-height: 1.4; }
-.card-detail svg { flex-shrink: 0; margin-top: 2px; color: var(--text-muted); }
+.card-detail svg { flex-shrink: 0; margin-top: 2px; color: var(--text-light); }
 
 .card-actions { display: flex; align-items: center; gap: 8px; margin-top: 6px; }
 
-/* Tap In — RSVP button */
+/* Tap In — green CTA */
 .btn-tapin {
     display: inline-flex; align-items: center; gap: 6px;
-    padding: 9px 22px; background: var(--green);
+    padding: 9px 22px;
+    background: var(--sx-green);
     border: none; border-radius: var(--radius-sm);
-    color: var(--bg-deep); font-family: 'Aptos', sans-serif;
+    color: #fff;
+    font-family: 'Aptos', sans-serif;
     font-size: 0.72rem; font-weight: 700; letter-spacing: 0.04em;
     text-transform: lowercase; cursor: pointer;
     transition: all 0.3s var(--ease-out); text-decoration: none;
 }
-.btn-tapin:hover { background: #6ee7a0; transform: translateY(-2px); box-shadow: 0 6px 24px rgba(74,222,128,0.25); color: var(--bg-deep); }
+.btn-tapin:hover { background: #4aab6a; transform: translateY(-2px); box-shadow: 0 4px 16px rgba(89,190,121,0.25); color: #fff; }
 
-/* That's a bet — Track button */
+/* That's a bet — blue outline on hover/lock */
 .btn-bet {
     height: 38px; padding: 0 14px;
     display: flex; align-items: center; justify-content: center; gap: 5px;
-    background: transparent; border: 1px solid var(--border-subtle);
-    border-radius: var(--radius-sm); color: var(--text-muted);
+    background: transparent; border: 1px solid var(--border);
+    border-radius: var(--radius-sm); color: var(--text-light);
     font-family: 'Aptos', sans-serif; font-size: 0.64rem; font-weight: 500;
     cursor: pointer; transition: all 0.3s var(--ease-out); flex-shrink: 0; white-space: nowrap;
 }
-.btn-bet:hover { border-color: var(--gold); color: var(--gold); }
-.btn-bet.locked { background: var(--gold-soft); border-color: var(--gold); color: var(--gold); font-weight: 600; }
-.btn-bet.locked svg { fill: var(--gold); }
+.btn-bet:hover { border-color: var(--sx-blue); color: var(--sx-blue); }
+.btn-bet.locked { background: rgba(80,175,232,0.08); border-color: var(--sx-blue); color: var(--sx-blue); font-weight: 600; }
+.btn-bet.locked svg { fill: var(--sx-blue); }
 .btn-bet-label { display: none; }
 @media (min-width: 420px) { .btn-bet-label { display: inline; } }
 
@@ -376,7 +387,13 @@ a:hover { color: var(--gold); }
     display: flex; flex-direction: column; align-items: center; justify-content: center;
     gap: 16px; padding: 80px 0; color: var(--text-muted); font-size: 0.82rem; grid-column: 1/-1;
 }
-.loader { width: 24px; height: 24px; border: 2px solid var(--border-subtle); border-top-color: var(--green); border-radius: 50%; animation: spin 0.7s linear infinite; }
+.loader {
+    width: 24px; height: 24px;
+    border: 2px solid var(--border);
+    border-top-color: var(--sx-blue);
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+}
 @keyframes spin { to { transform: rotate(360deg); } }
 
 .error-state, .empty-state { text-align: center; padding: 80px 20px; color: var(--text-secondary); }
@@ -388,15 +405,16 @@ a:hover { color: var(--gold); }
 /* --- Footer --- */
 .site-footer {
     margin-top: 64px; padding-top: 24px;
-    border-top: 1px solid var(--border-subtle);
+    border-top: 3px solid transparent;
+    border-image: linear-gradient(90deg, var(--sx-green), var(--sx-blue), var(--sx-orange)) 1;
     display: flex; justify-content: space-between; align-items: flex-end; flex-wrap: wrap; gap: 16px;
-    animation: fadeUp 1s var(--ease-out) 0.3s both;
+    animation: fadeUp 0.8s var(--ease-out) 0.3s both;
 }
 .footer-actions { display: flex; gap: 8px; }
 .btn-export {
     display: inline-flex; align-items: center; gap: 5px;
     padding: 7px 14px; background: transparent;
-    border: 1px solid var(--border-subtle); border-radius: var(--radius-sm);
+    border: 1px solid var(--border); border-radius: var(--radius-sm);
     color: var(--text-muted); font-family: 'Aptos', sans-serif;
     font-size: 0.64rem; font-weight: 500; letter-spacing: 0.08em;
     text-transform: uppercase; cursor: pointer; transition: all 0.25s;
@@ -404,8 +422,8 @@ a:hover { color: var(--gold); }
 .btn-export:hover { border-color: var(--text-secondary); color: var(--text-secondary); }
 .footer-meta { text-align: right; font-size: 0.65rem; color: var(--text-muted); }
 .footer-sub { margin-top: 3px; opacity: 0.5; }
-.footer-sub a { color: var(--text-muted); border-bottom: 1px solid var(--border-subtle); }
-.footer-sub a:hover { color: var(--green); border-color: var(--green); }
+.footer-sub a { color: var(--text-muted); border-bottom: 1px solid var(--border); }
+.footer-sub a:hover { color: var(--sx-blue); border-color: var(--sx-blue); }
 
 /* --- Animations --- */
 @keyframes fadeUp { from { opacity: 0; transform: translateY(18px); } to { opacity: 1; transform: translateY(0); } }
@@ -424,5 +442,5 @@ a:hover { color: var(--gold); }
 
 ::-webkit-scrollbar { width: 5px; }
 ::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.06); border-radius: 3px; }
-::selection { background: var(--green-soft); color: #fff; }
+::-webkit-scrollbar-thumb { background: rgba(0,30,30,0.08); border-radius: 3px; }
+::selection { background: rgba(80,175,232,0.15); color: var(--sx-dark); }
