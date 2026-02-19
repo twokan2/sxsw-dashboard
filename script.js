@@ -1,550 +1,287 @@
-// =============================================
-// THE ERRANT — ATX · V4
-// =============================================
-
+// THE ERRANT — ATX · V6 · All Together Now
 const SHEET_URL = 'https://docs.google.com/spreadsheets/d/1xeEYRm302zYQOxs1Mu_hEcnf_XQLeSxJ2-w-uXIgV2A/export?format=csv';
 const STORAGE_KEY = 'knight-errant-rsvp';
 const SXSW_START = new Date('2026-03-12');
-
 let allEvents = [];
 let activeVibeFilter = null;
 let activeDateFilter = null;
 
-// =============================================
-// STARFIELD
-// =============================================
-(function initStarfield() {
-    const canvas = document.getElementById('starfield');
-    if (!canvas) return;
-    const ctx = canvas.getContext('2d');
-    let stars = [];
-    let shootingStars = [];
-    let w, h;
+// === STARFIELD (warm tones) ===
+(function() {
+    const c = document.getElementById('starfield');
+    if (!c) return;
+    const ctx = c.getContext('2d');
+    let stars = [], shooters = [], w, h;
 
-    function resize() {
-        w = canvas.width = window.innerWidth;
-        h = canvas.height = window.innerHeight;
-    }
-
-    function createStars() {
+    function resize() { w = c.width = window.innerWidth; h = c.height = window.innerHeight; }
+    function create() {
         stars = [];
-        const count = Math.floor((w * h) / 4000);
-        for (let i = 0; i < count; i++) {
+        const n = Math.floor((w * h) / 4500);
+        const colors = ['255,253,240', '245,200,120', '180,230,180', '255,240,200'];
+        for (let i = 0; i < n; i++) {
             stars.push({
-                x: Math.random() * w,
-                y: Math.random() * h,
-                r: Math.random() * 1.4 + 0.3,
-                alpha: Math.random() * 0.6 + 0.2,
-                pulse: Math.random() * 0.02 + 0.005,
-                phase: Math.random() * Math.PI * 2
+                x: Math.random() * w, y: Math.random() * h,
+                r: Math.random() * 1.3 + 0.3,
+                alpha: Math.random() * 0.5 + 0.2,
+                pulse: Math.random() * 0.02 + 0.004,
+                phase: Math.random() * Math.PI * 2,
+                color: colors[Math.floor(Math.random() * colors.length)]
             });
         }
     }
-
-    function maybeShootingStar() {
-        if (Math.random() < 0.003 && shootingStars.length < 2) {
-            shootingStars.push({
-                x: Math.random() * w * 0.8,
-                y: Math.random() * h * 0.3,
-                len: Math.random() * 60 + 40,
-                speed: Math.random() * 4 + 3,
-                angle: Math.PI / 6 + Math.random() * 0.3,
-                alpha: 1,
-                life: 1
+    function shoot() {
+        if (Math.random() < 0.002 && shooters.length < 2) {
+            shooters.push({
+                x: Math.random() * w * 0.8, y: Math.random() * h * 0.3,
+                len: Math.random() * 50 + 30, speed: Math.random() * 3 + 2.5,
+                angle: Math.PI / 6 + Math.random() * 0.3, alpha: 1, life: 1
             });
         }
     }
-
-    function draw(time) {
+    function draw(t) {
         ctx.clearRect(0, 0, w, h);
-
-        // Stars
         for (const s of stars) {
-            const flicker = Math.sin(time * s.pulse + s.phase) * 0.2 + 0.8;
-            const a = s.alpha * flicker;
-            ctx.beginPath();
-            ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
-            ctx.fillStyle = `rgba(230, 220, 255, ${a})`;
-            ctx.fill();
+            const f = Math.sin(t * s.pulse + s.phase) * 0.2 + 0.8;
+            ctx.beginPath(); ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
+            ctx.fillStyle = `rgba(${s.color},${s.alpha * f})`; ctx.fill();
         }
-
-        // Shooting stars
-        for (let i = shootingStars.length - 1; i >= 0; i--) {
-            const ss = shootingStars[i];
-            const dx = Math.cos(ss.angle) * ss.speed;
-            const dy = Math.sin(ss.angle) * ss.speed;
-            ss.x += dx;
-            ss.y += dy;
-            ss.life -= 0.012;
-            ss.alpha = ss.life;
-
-            if (ss.life <= 0) {
-                shootingStars.splice(i, 1);
-                continue;
-            }
-
-            const tailX = ss.x - Math.cos(ss.angle) * ss.len;
-            const tailY = ss.y - Math.sin(ss.angle) * ss.len;
-            const grad = ctx.createLinearGradient(tailX, tailY, ss.x, ss.y);
-            grad.addColorStop(0, `rgba(224, 64, 251, 0)`);
-            grad.addColorStop(1, `rgba(224, 64, 251, ${ss.alpha * 0.7})`);
-
-            ctx.beginPath();
-            ctx.moveTo(tailX, tailY);
-            ctx.lineTo(ss.x, ss.y);
-            ctx.strokeStyle = grad;
-            ctx.lineWidth = 1.5;
-            ctx.stroke();
-
-            // Head glow
-            ctx.beginPath();
-            ctx.arc(ss.x, ss.y, 2, 0, Math.PI * 2);
-            ctx.fillStyle = `rgba(255, 255, 255, ${ss.alpha})`;
-            ctx.fill();
+        for (let i = shooters.length - 1; i >= 0; i--) {
+            const ss = shooters[i];
+            ss.x += Math.cos(ss.angle) * ss.speed;
+            ss.y += Math.sin(ss.angle) * ss.speed;
+            ss.life -= 0.012; ss.alpha = ss.life;
+            if (ss.life <= 0) { shooters.splice(i, 1); continue; }
+            const tx = ss.x - Math.cos(ss.angle) * ss.len;
+            const ty = ss.y - Math.sin(ss.angle) * ss.len;
+            const g = ctx.createLinearGradient(tx, ty, ss.x, ss.y);
+            g.addColorStop(0, 'rgba(245,200,120,0)');
+            g.addColorStop(1, `rgba(245,200,120,${ss.alpha * 0.6})`);
+            ctx.beginPath(); ctx.moveTo(tx, ty); ctx.lineTo(ss.x, ss.y);
+            ctx.strokeStyle = g; ctx.lineWidth = 1.5; ctx.stroke();
+            ctx.beginPath(); ctx.arc(ss.x, ss.y, 2, 0, Math.PI * 2);
+            ctx.fillStyle = `rgba(255,253,240,${ss.alpha})`; ctx.fill();
         }
-
-        maybeShootingStar();
+        shoot();
         requestAnimationFrame(draw);
     }
+    resize(); create(); requestAnimationFrame(draw);
+    window.addEventListener('resize', () => { resize(); create(); });
+})();
 
-    resize();
-    createStars();
-    requestAnimationFrame(draw);
+// === MUSIC PLAYER ===
+(function() {
+    const audio = document.getElementById('bgMusic');
+    const btn = document.getElementById('musicToggle');
+    const label = document.getElementById('musicLabel');
+    const iconOff = document.getElementById('musicIconOff');
+    const iconOn = document.getElementById('musicIconOn');
+    if (!audio || !btn) return;
 
-    window.addEventListener('resize', () => {
-        resize();
-        createStars();
+    let playing = false;
+    audio.volume = 0.35;
+
+    btn.addEventListener('click', () => {
+        if (playing) {
+            audio.pause();
+            playing = false;
+            btn.classList.remove('playing');
+            iconOff.style.display = '';
+            iconOn.style.display = 'none';
+            label.textContent = 'play vibes';
+        } else {
+            audio.play().then(() => {
+                playing = true;
+                btn.classList.add('playing');
+                iconOff.style.display = 'none';
+                iconOn.style.display = '';
+                label.textContent = 'vibes on';
+            }).catch(() => {
+                label.textContent = 'no audio file';
+                setTimeout(() => { label.textContent = 'play vibes'; }, 2000);
+            });
+        }
     });
 })();
 
-// =============================================
-// INIT
-// =============================================
-document.addEventListener('DOMContentLoaded', () => {
-    updateCountdown();
-    loadEvents();
-    bindControls();
-});
+// === INIT ===
+document.addEventListener('DOMContentLoaded', () => { updateCountdown(); loadEvents(); bindControls(); });
 
-// =============================================
-// COUNTDOWN
-// =============================================
 function updateCountdown() {
-    const now = new Date();
-    const diff = Math.ceil((SXSW_START - now) / (1000 * 60 * 60 * 24));
+    const diff = Math.ceil((SXSW_START - new Date()) / 864e5);
     const el = document.getElementById('daysUntil');
-    if (el) el.textContent = diff > 0 ? diff : (diff === 0 ? '🔥' : '🔴');
+    if (el) el.textContent = diff > 0 ? diff : diff === 0 ? '🔥' : '🔴';
 }
 
-// =============================================
-// LOAD EVENTS
-// =============================================
+// === LOAD ===
 async function loadEvents() {
-    const grid = document.getElementById('eventsGrid');
-    const loading = document.getElementById('loadingState');
-    const errorEl = document.getElementById('errorState');
-    const emptyEl = document.getElementById('emptyState');
-
-    grid.style.display = 'grid';
-    if (loading) loading.style.display = 'flex';
-    errorEl.style.display = 'none';
-    emptyEl.style.display = 'none';
-
+    const grid = document.getElementById('eventsGrid'), load = document.getElementById('loadingState'),
+          err = document.getElementById('errorState'), empty = document.getElementById('emptyState');
+    grid.style.display = 'grid'; if (load) load.style.display = 'flex';
+    err.style.display = 'none'; empty.style.display = 'none';
     try {
-        const resp = await fetch(SHEET_URL);
-        if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
-        const csv = await resp.text();
-        allEvents = parseCSV(csv);
-
-        if (loading) loading.style.display = 'none';
-
-        if (allEvents.length === 0) {
-            grid.style.display = 'none';
-            emptyEl.style.display = 'block';
-            return;
-        }
-
-        allEvents.sort((a, b) => {
-            const da = a.date || '9999';
-            const db = b.date || '9999';
-            if (da !== db) return da.localeCompare(db);
-            return (a.time || '').localeCompare(b.time || '');
-        });
-
-        updateStats();
-        buildVibeFilters();
-        buildDateNav();
-        renderEvents(allEvents);
-    } catch (err) {
-        console.error('Load error:', err);
-        if (loading) loading.style.display = 'none';
-        grid.style.display = 'none';
-        errorEl.style.display = 'block';
-        const msg = document.getElementById('errorMsg');
-        if (err.message.includes('403')) {
-            msg.textContent = 'Sheet is private — make it "Anyone with the link can view"';
-        } else {
-            msg.textContent = "Can't reach the sheet right now.";
-        }
+        const r = await fetch(SHEET_URL);
+        if (!r.ok) throw new Error(`HTTP ${r.status}`);
+        allEvents = parseCSV(await r.text());
+        if (load) load.style.display = 'none';
+        if (!allEvents.length) { grid.style.display = 'none'; empty.style.display = 'block'; return; }
+        allEvents.sort((a, b) => (a.date || '9999').localeCompare(b.date || '9999') || (a.time || '').localeCompare(b.time || ''));
+        updateStats(); buildVibeFilters(); buildDateNav(); renderEvents(allEvents);
+    } catch (e) {
+        console.error(e); if (load) load.style.display = 'none';
+        grid.style.display = 'none'; err.style.display = 'block';
+        document.getElementById('errorMsg').textContent = e.message.includes('403')
+            ? 'Sheet is private — make it "Anyone with the link can view"' : "Can't reach the sheet right now.";
     }
 }
 
-// =============================================
-// CSV PARSER
-// =============================================
+// === CSV ===
 function parseCSV(csv) {
-    const lines = csv.split('\n').map(line => {
-        const result = [];
-        let current = '';
-        let inQuotes = false;
-        for (let i = 0; i < line.length; i++) {
-            const ch = line[i];
-            if (ch === '"') {
-                if (inQuotes && line[i + 1] === '"') { current += '"'; i++; }
-                else inQuotes = !inQuotes;
-            } else if (ch === ',' && !inQuotes) {
-                result.push(current.trim());
-                current = '';
-            } else {
-                current += ch;
-            }
+    const lines = csv.split('\n').map(l => {
+        const r = []; let cur = '', q = false;
+        for (let i = 0; i < l.length; i++) {
+            const c = l[i];
+            if (c === '"') { if (q && l[i+1] === '"') { cur += '"'; i++; } else q = !q; }
+            else if (c === ',' && !q) { r.push(cur.trim()); cur = ''; }
+            else cur += c;
         }
-        result.push(current.trim());
-        return result;
+        r.push(cur.trim()); return r;
     });
-
     if (lines.length < 2) return [];
-    const headers = lines[0].map(h => h.toLowerCase().trim());
-
-    const col = (name, ...alts) => {
-        const all = [name, ...alts].map(n => n.toLowerCase());
-        return headers.findIndex(h => all.includes(h));
-    };
-
-    const iDate = col('date');
-    const iTime = col('time');
-    const iName = col('event name');
-    const iLink = col('event link');
-    const iLocation = col('event location', 'location');
-    const iVibe = col('vibe');
-    const iJoin = col('link to join');
-    const iCost = col('cost');
-
-    const events = [];
+    const h = lines[0].map(x => x.toLowerCase().trim());
+    const col = (n, ...a) => h.findIndex(x => [n,...a].map(s=>s.toLowerCase()).includes(x));
+    const iD=col('date'),iT=col('time'),iN=col('event name'),iL=col('event link'),
+          iLo=col('event location','location'),iV=col('vibe'),iJ=col('link to join'),iC=col('cost');
+    const ev = [];
     for (let i = 1; i < lines.length; i++) {
-        const r = lines[i];
-        if (!r || r.length < 2 || !r.some(c => c.trim())) continue;
-        const g = idx => (idx >= 0 && idx < r.length) ? r[idx].trim() : '';
-        events.push({
-            date: g(iDate),
-            time: g(iTime) || 'TBD',
-            name: g(iName) || 'Untitled Event',
-            link: g(iLink),
-            location: g(iLocation) || 'TBD',
-            vibe: g(iVibe) || 'Event',
-            joinLink: g(iJoin) || g(iLink),
-            cost: g(iCost) || 'N/A'
-        });
+        const r = lines[i]; if (!r || r.length < 2 || !r.some(c=>c.trim())) continue;
+        const g = x => (x >= 0 && x < r.length) ? r[x].trim() : '';
+        ev.push({ date:g(iD), time:g(iT)||'TBD', name:g(iN)||'Untitled Event', link:g(iL),
+            location:g(iLo)||'TBD', vibe:g(iV)||'Event', joinLink:g(iJ)||g(iL), cost:g(iC)||'N/A' });
     }
-    return events;
+    return ev;
 }
 
-// =============================================
-// STATS
-// =============================================
+// === STATS ===
 function updateStats() {
-    const tracked = getTracked();
+    const t = getTracked();
     document.getElementById('totalEvents').textContent = allEvents.length;
-    document.getElementById('freeEvents').textContent = allEvents.filter(e =>
-        e.cost.toLowerCase() === 'free' || e.cost === '$0' || e.cost === '0'
-    ).length;
-    document.getElementById('rsvpCount').textContent = tracked.size;
+    document.getElementById('freeEvents').textContent = allEvents.filter(e => e.cost.toLowerCase()==='free'||e.cost==='$0').length;
+    document.getElementById('rsvpCount').textContent = t.size;
 }
 
-// =============================================
-// VIBE FILTERS
-// =============================================
+// === VIBE FILTERS ===
 function buildVibeFilters() {
-    const vibes = [...new Set(allEvents.map(e => e.vibe))].sort();
-    const container = document.getElementById('vibeFilters');
-    container.innerHTML = '';
-
-    vibes.forEach(vibe => {
-        const btn = document.createElement('button');
-        btn.className = 'vibe-btn';
-        btn.textContent = vibe.toLowerCase();
-        btn.addEventListener('click', () => {
-            if (activeVibeFilter === vibe) {
-                activeVibeFilter = null;
-                btn.classList.remove('active');
-            } else {
-                activeVibeFilter = vibe;
-                container.querySelectorAll('.vibe-btn').forEach(b => b.classList.remove('active'));
-                btn.classList.add('active');
-            }
+    const vibes = [...new Set(allEvents.map(e=>e.vibe))].sort();
+    const c = document.getElementById('vibeFilters'); c.innerHTML = '';
+    vibes.forEach(v => {
+        const b = document.createElement('button'); b.className = 'vibe-btn'; b.textContent = v.toLowerCase();
+        b.addEventListener('click', () => {
+            if (activeVibeFilter === v) { activeVibeFilter = null; b.classList.remove('active'); }
+            else { activeVibeFilter = v; c.querySelectorAll('.vibe-btn').forEach(x=>x.classList.remove('active')); b.classList.add('active'); }
             applyFilters();
         });
-        container.appendChild(btn);
+        c.appendChild(b);
     });
 }
 
-// =============================================
-// DATE NAVIGATION
-// =============================================
+// === DATE NAV ===
 function buildDateNav() {
-    const dates = [...new Set(allEvents.map(e => e.date).filter(Boolean))].sort();
-    const nav = document.getElementById('dateNav');
-    nav.innerHTML = '';
-
-    const days = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'];
-    const months = ['jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug', 'sep', 'oct', 'nov', 'dec'];
-
-    dates.forEach(dateStr => {
-        const d = new Date(dateStr + 'T12:00:00');
-        const count = allEvents.filter(e => e.date === dateStr).length;
-        const chip = document.createElement('button');
-        chip.className = 'date-chip';
-        chip.innerHTML = `${days[d.getDay()]} ${months[d.getMonth()]} ${d.getDate()} <span class="date-chip-count">${count}</span>`;
-        chip.addEventListener('click', () => {
-            if (activeDateFilter === dateStr) {
-                activeDateFilter = null;
-                chip.classList.remove('active');
-                document.getElementById('dateFilter').value = '';
-            } else {
-                activeDateFilter = dateStr;
-                nav.querySelectorAll('.date-chip').forEach(c => c.classList.remove('active'));
-                chip.classList.add('active');
-                document.getElementById('dateFilter').value = dateStr;
-            }
+    const dates = [...new Set(allEvents.map(e=>e.date).filter(Boolean))].sort();
+    const nav = document.getElementById('dateNav'); nav.innerHTML = '';
+    const d = ['sun','mon','tue','wed','thu','fri','sat'], m = ['jan','feb','mar','apr','may','jun','jul','aug','sep','oct','nov','dec'];
+    dates.forEach(ds => {
+        const dt = new Date(ds+'T12:00:00'), cnt = allEvents.filter(e=>e.date===ds).length;
+        const ch = document.createElement('button'); ch.className = 'date-chip';
+        ch.innerHTML = `${d[dt.getDay()]} ${m[dt.getMonth()]} ${dt.getDate()} <span class="date-chip-count">${cnt}</span>`;
+        ch.addEventListener('click', () => {
+            if (activeDateFilter === ds) { activeDateFilter = null; ch.classList.remove('active'); document.getElementById('dateFilter').value = ''; }
+            else { activeDateFilter = ds; nav.querySelectorAll('.date-chip').forEach(x=>x.classList.remove('active')); ch.classList.add('active'); document.getElementById('dateFilter').value = ds; }
             applyFilters();
         });
-        nav.appendChild(chip);
+        nav.appendChild(ch);
     });
 }
 
-// =============================================
-// RENDER EVENTS
-// =============================================
+// === RENDER ===
 function renderEvents(events) {
-    const grid = document.getElementById('eventsGrid');
-    const emptyEl = document.getElementById('emptyState');
-    const errorEl = document.getElementById('errorState');
-
-    grid.innerHTML = '';
-    errorEl.style.display = 'none';
-
-    if (events.length === 0) {
-        grid.style.display = 'none';
-        emptyEl.style.display = 'block';
-        return;
-    }
-
-    grid.style.display = 'grid';
-    emptyEl.style.display = 'none';
-
-    const tracked = getTracked();
-    const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-
-    events.forEach((event, idx) => {
-        const card = document.createElement('article');
-        card.className = 'event-card';
-        card.style.animationDelay = `${Math.min(idx * 0.05, 0.8)}s`;
-
-        let dayLabel = '';
-        let dateNum = '';
-        if (event.date) {
-            const d = new Date(event.date + 'T12:00:00');
-            dayLabel = dayNames[d.getDay()];
-            dateNum = d.getDate();
-        }
-
-        const eventKey = `${event.name}-${event.date}`;
-        const isTracked = tracked.has(eventKey);
-        const costDisplay = event.cost.toLowerCase() === 'free' ? 'Free ✦' : event.cost;
-
+    const grid = document.getElementById('eventsGrid'), empty = document.getElementById('emptyState');
+    grid.innerHTML = ''; document.getElementById('errorState').style.display = 'none';
+    if (!events.length) { grid.style.display = 'none'; empty.style.display = 'block'; return; }
+    grid.style.display = 'grid'; empty.style.display = 'none';
+    const tracked = getTracked(), dn = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+    events.forEach((ev, i) => {
+        const card = document.createElement('article'); card.className = 'event-card';
+        card.style.animationDelay = `${Math.min(i*0.05,0.8)}s`;
+        let dl='', dd='';
+        if (ev.date) { const dt = new Date(ev.date+'T12:00:00'); dl = dn[dt.getDay()]; dd = dt.getDate(); }
+        const k = `${ev.name}-${ev.date}`, is_t = tracked.has(k);
+        const cost = ev.cost.toLowerCase()==='free' ? 'Free ✦' : ev.cost;
         card.innerHTML = `
-            <div class="card-date-strip">
-                <span class="card-day">${dayLabel}</span>
-                <span class="card-date-num">${dateNum}</span>
-            </div>
+            <div class="card-date-strip"><span class="card-day">${dl}</span><span class="card-date-num">${dd}</span></div>
             <div class="card-body">
-                <div class="card-vibe-tag">${escapeHTML(event.vibe)}</div>
-                <h3 class="card-title">${escapeHTML(event.name)}</h3>
+                <div class="card-vibe-tag">${esc(ev.vibe)}</div>
+                <h3 class="card-title">${esc(ev.name)}</h3>
                 <div class="card-details">
-                    <div class="card-detail">
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-                        <span>${escapeHTML(event.time)}</span>
-                    </div>
-                    <div class="card-detail">
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
-                        <span>${escapeHTML(event.location)}</span>
-                    </div>
-                    <div class="card-detail">
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
-                        <span>${escapeHTML(costDisplay)}</span>
-                    </div>
+                    <div class="card-detail"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg><span>${esc(ev.time)}</span></div>
+                    <div class="card-detail"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg><span>${esc(ev.location)}</span></div>
+                    <div class="card-detail"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg><span>${esc(cost)}</span></div>
                 </div>
                 <div class="card-actions">
-                    <a class="btn-blueprint" href="${escapeHTML(event.joinLink || event.link || '#')}" target="_blank" rel="noopener">
-                        <span>the blueprint</span>
-                    </a>
-                    <button class="btn-bet ${isTracked ? 'locked' : ''}" data-key="${escapeHTML(eventKey)}">
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="${isTracked ? 'currentColor' : 'none'}" stroke="currentColor" stroke-width="2"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>
-                        <span class="btn-bet-label">${isTracked ? "that's a bet ✓" : "that's a bet"}</span>
+                    <a class="btn-tapin" href="${esc(ev.joinLink||ev.link||'#')}" target="_blank" rel="noopener">tap in</a>
+                    <button class="btn-bet ${is_t?'locked':''}" data-key="${esc(k)}">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="${is_t?'currentColor':'none'}" stroke="currentColor" stroke-width="2"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>
+                        <span class="btn-bet-label">${is_t?"that's a bet ✓":"that's a bet"}</span>
                     </button>
                 </div>
-            </div>
-        `;
-
-        const betBtn = card.querySelector('.btn-bet');
-        betBtn.addEventListener('click', () => toggleTrack(eventKey, betBtn));
-
+            </div>`;
+        card.querySelector('.btn-bet').addEventListener('click', function() { toggleTrack(k, this); });
         grid.appendChild(card);
     });
 }
 
-// =============================================
-// TRACKING
-// =============================================
-function getTracked() {
-    try {
-        return new Set(JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]'));
-    } catch { return new Set(); }
+// === TRACKING ===
+function getTracked() { try { return new Set(JSON.parse(localStorage.getItem(STORAGE_KEY)||'[]')); } catch { return new Set(); } }
+function toggleTrack(k, btn) {
+    const t = getTracked(), lb = btn.querySelector('.btn-bet-label');
+    if (t.has(k)) { t.delete(k); btn.classList.remove('locked'); btn.querySelector('svg').setAttribute('fill','none'); if(lb) lb.textContent="that's a bet"; }
+    else { t.add(k); btn.classList.add('locked'); btn.querySelector('svg').setAttribute('fill','currentColor'); if(lb) lb.textContent="that's a bet ✓"; }
+    localStorage.setItem(STORAGE_KEY, JSON.stringify([...t])); updateStats();
 }
 
-function toggleTrack(key, btn) {
-    const tracked = getTracked();
-    const label = btn.querySelector('.btn-bet-label');
-    if (tracked.has(key)) {
-        tracked.delete(key);
-        btn.classList.remove('locked');
-        btn.querySelector('svg').setAttribute('fill', 'none');
-        if (label) label.textContent = "that's a bet";
-    } else {
-        tracked.add(key);
-        btn.classList.add('locked');
-        btn.querySelector('svg').setAttribute('fill', 'currentColor');
-        if (label) label.textContent = "that's a bet ✓";
-    }
-    localStorage.setItem(STORAGE_KEY, JSON.stringify([...tracked]));
-    updateStats();
-}
-
-// =============================================
-// FILTERING
-// =============================================
+// === FILTERS ===
 function applyFilters() {
-    const searchTerm = document.getElementById('searchInput').value.toLowerCase().trim();
-    const dateVal = activeDateFilter || document.getElementById('dateFilter').value;
-
-    let filtered = allEvents;
-
-    if (searchTerm) {
-        filtered = filtered.filter(e =>
-            e.name.toLowerCase().includes(searchTerm) ||
-            e.vibe.toLowerCase().includes(searchTerm) ||
-            e.location.toLowerCase().includes(searchTerm) ||
-            e.cost.toLowerCase().includes(searchTerm)
-        );
-    }
-
-    if (dateVal) {
-        filtered = filtered.filter(e => e.date === dateVal);
-    }
-
-    if (activeVibeFilter) {
-        filtered = filtered.filter(e =>
-            e.vibe.toLowerCase() === activeVibeFilter.toLowerCase()
-        );
-    }
-
-    renderEvents(filtered);
+    const s = document.getElementById('searchInput').value.toLowerCase().trim();
+    const d = activeDateFilter || document.getElementById('dateFilter').value;
+    let f = allEvents;
+    if (s) f = f.filter(e => e.name.toLowerCase().includes(s)||e.vibe.toLowerCase().includes(s)||e.location.toLowerCase().includes(s)||e.cost.toLowerCase().includes(s));
+    if (d) f = f.filter(e => e.date === d);
+    if (activeVibeFilter) f = f.filter(e => e.vibe.toLowerCase() === activeVibeFilter.toLowerCase());
+    renderEvents(f);
 }
-
 function clearAllFilters() {
-    document.getElementById('searchInput').value = '';
-    document.getElementById('dateFilter').value = '';
-    activeVibeFilter = null;
-    activeDateFilter = null;
-    document.querySelectorAll('.vibe-btn').forEach(b => b.classList.remove('active'));
-    document.querySelectorAll('.date-chip').forEach(c => c.classList.remove('active'));
+    document.getElementById('searchInput').value = ''; document.getElementById('dateFilter').value = '';
+    activeVibeFilter = null; activeDateFilter = null;
+    document.querySelectorAll('.vibe-btn').forEach(b=>b.classList.remove('active'));
+    document.querySelectorAll('.date-chip').forEach(c=>c.classList.remove('active'));
     renderEvents(allEvents);
 }
 
-// =============================================
-// CONTROLS
-// =============================================
+// === CONTROLS ===
 function bindControls() {
     document.getElementById('searchInput').addEventListener('input', debounce(applyFilters, 200));
-    document.getElementById('dateFilter').addEventListener('change', () => {
-        activeDateFilter = document.getElementById('dateFilter').value || null;
-        document.querySelectorAll('.date-chip').forEach(c => c.classList.remove('active'));
-        applyFilters();
-    });
+    document.getElementById('dateFilter').addEventListener('change', () => { activeDateFilter = document.getElementById('dateFilter').value||null; document.querySelectorAll('.date-chip').forEach(c=>c.classList.remove('active')); applyFilters(); });
     document.getElementById('clearFilters').addEventListener('click', clearAllFilters);
     document.getElementById('viewAll').addEventListener('click', clearAllFilters);
-    document.getElementById('refreshBtn').addEventListener('click', () => {
-        allEvents = [];
-        activeVibeFilter = null;
-        activeDateFilter = null;
-        document.getElementById('searchInput').value = '';
-        document.getElementById('dateFilter').value = '';
-        loadEvents();
-    });
-    document.getElementById('exportExcel').addEventListener('click', exportExcel);
-    document.getElementById('exportCSV').addEventListener('click', exportCSV);
+    document.getElementById('refreshBtn').addEventListener('click', () => { allEvents=[]; activeVibeFilter=null; activeDateFilter=null; document.getElementById('searchInput').value=''; document.getElementById('dateFilter').value=''; loadEvents(); });
+    document.getElementById('exportExcel').addEventListener('click', exportXlsx);
+    document.getElementById('exportCSV').addEventListener('click', exportCsv);
 }
 
-// =============================================
-// EXPORT
-// =============================================
-function exportExcel() {
-    if (!allEvents.length) return;
-    const ws = XLSX.utils.json_to_sheet(allEvents.map(formatExport));
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, 'SXSW 2026');
-    XLSX.writeFile(wb, 'the-errant-atx-sxsw-2026.xlsx');
-}
+// === EXPORT ===
+function fmt(e) { return { Date:e.date, Time:e.time, 'Event Name':e.name, Location:e.location, Vibe:e.vibe, Cost:e.cost, Link:e.joinLink||e.link }; }
+function exportXlsx() { if(!allEvents.length) return; const ws=XLSX.utils.json_to_sheet(allEvents.map(fmt)); const wb=XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb,ws,'SXSW 2026'); XLSX.writeFile(wb,'the-errant-atx-sxsw-2026.xlsx'); }
+function exportCsv() { if(!allEvents.length) return; const ws=XLSX.utils.json_to_sheet(allEvents.map(fmt)); const csv=XLSX.utils.sheet_to_csv(ws); const b=new Blob([csv],{type:'text/csv'}); const u=URL.createObjectURL(b); const a=document.createElement('a'); a.href=u; a.download='the-errant-atx-sxsw-2026.csv'; a.click(); URL.revokeObjectURL(u); }
 
-function exportCSV() {
-    if (!allEvents.length) return;
-    const ws = XLSX.utils.json_to_sheet(allEvents.map(formatExport));
-    const csv = XLSX.utils.sheet_to_csv(ws);
-    const blob = new Blob([csv], { type: 'text/csv' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = 'the-errant-atx-sxsw-2026.csv';
-    a.click();
-    URL.revokeObjectURL(url);
-}
-
-function formatExport(e) {
-    return {
-        'Date': e.date,
-        'Time': e.time,
-        'Event Name': e.name,
-        'Location': e.location,
-        'Vibe': e.vibe,
-        'Cost': e.cost,
-        'Link': e.joinLink || e.link
-    };
-}
-
-// =============================================
-// UTILITIES
-// =============================================
-function escapeHTML(str) {
-    if (!str) return '';
-    const div = document.createElement('div');
-    div.textContent = str;
-    return div.innerHTML;
-}
-
-function debounce(fn, ms) {
-    let timer;
-    return (...args) => {
-        clearTimeout(timer);
-        timer = setTimeout(() => fn(...args), ms);
-    };
-}
+// === UTIL ===
+function esc(s) { if(!s) return ''; const d=document.createElement('div'); d.textContent=s; return d.innerHTML; }
+function debounce(fn, ms) { let t; return (...a) => { clearTimeout(t); t=setTimeout(()=>fn(...a), ms); }; }
