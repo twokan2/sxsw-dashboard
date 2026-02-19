@@ -1,72 +1,11 @@
-// THE ERRANT — ATX · V6 · All Together Now
+// THE ERRANT — ATX · V7 · All Together Now · Light Mode
 const SHEET_URL = 'https://docs.google.com/spreadsheets/d/1xeEYRm302zYQOxs1Mu_hEcnf_XQLeSxJ2-w-uXIgV2A/export?format=csv';
 const STORAGE_KEY = 'knight-errant-rsvp';
 const SXSW_START = new Date('2026-03-12');
+const SX_COLORS = ['green', 'blue', 'orange', 'gray', 'dark'];
 let allEvents = [];
 let activeVibeFilter = null;
 let activeDateFilter = null;
-
-// === STARFIELD (warm tones) ===
-(function() {
-    const c = document.getElementById('starfield');
-    if (!c) return;
-    const ctx = c.getContext('2d');
-    let stars = [], shooters = [], w, h;
-
-    function resize() { w = c.width = window.innerWidth; h = c.height = window.innerHeight; }
-    function create() {
-        stars = [];
-        const n = Math.floor((w * h) / 4500);
-        const colors = ['255,253,240', '245,200,120', '180,230,180', '255,240,200'];
-        for (let i = 0; i < n; i++) {
-            stars.push({
-                x: Math.random() * w, y: Math.random() * h,
-                r: Math.random() * 1.3 + 0.3,
-                alpha: Math.random() * 0.5 + 0.2,
-                pulse: Math.random() * 0.02 + 0.004,
-                phase: Math.random() * Math.PI * 2,
-                color: colors[Math.floor(Math.random() * colors.length)]
-            });
-        }
-    }
-    function shoot() {
-        if (Math.random() < 0.002 && shooters.length < 2) {
-            shooters.push({
-                x: Math.random() * w * 0.8, y: Math.random() * h * 0.3,
-                len: Math.random() * 50 + 30, speed: Math.random() * 3 + 2.5,
-                angle: Math.PI / 6 + Math.random() * 0.3, alpha: 1, life: 1
-            });
-        }
-    }
-    function draw(t) {
-        ctx.clearRect(0, 0, w, h);
-        for (const s of stars) {
-            const f = Math.sin(t * s.pulse + s.phase) * 0.2 + 0.8;
-            ctx.beginPath(); ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
-            ctx.fillStyle = `rgba(${s.color},${s.alpha * f})`; ctx.fill();
-        }
-        for (let i = shooters.length - 1; i >= 0; i--) {
-            const ss = shooters[i];
-            ss.x += Math.cos(ss.angle) * ss.speed;
-            ss.y += Math.sin(ss.angle) * ss.speed;
-            ss.life -= 0.012; ss.alpha = ss.life;
-            if (ss.life <= 0) { shooters.splice(i, 1); continue; }
-            const tx = ss.x - Math.cos(ss.angle) * ss.len;
-            const ty = ss.y - Math.sin(ss.angle) * ss.len;
-            const g = ctx.createLinearGradient(tx, ty, ss.x, ss.y);
-            g.addColorStop(0, 'rgba(245,200,120,0)');
-            g.addColorStop(1, `rgba(245,200,120,${ss.alpha * 0.6})`);
-            ctx.beginPath(); ctx.moveTo(tx, ty); ctx.lineTo(ss.x, ss.y);
-            ctx.strokeStyle = g; ctx.lineWidth = 1.5; ctx.stroke();
-            ctx.beginPath(); ctx.arc(ss.x, ss.y, 2, 0, Math.PI * 2);
-            ctx.fillStyle = `rgba(255,253,240,${ss.alpha})`; ctx.fill();
-        }
-        shoot();
-        requestAnimationFrame(draw);
-    }
-    resize(); create(); requestAnimationFrame(draw);
-    window.addEventListener('resize', () => { resize(); create(); });
-})();
 
 // === MUSIC PLAYER ===
 (function() {
@@ -212,6 +151,8 @@ function renderEvents(events) {
     events.forEach((ev, i) => {
         const card = document.createElement('article'); card.className = 'event-card';
         card.style.animationDelay = `${Math.min(i*0.05,0.8)}s`;
+        // Cycle through SXSW palette colors
+        card.setAttribute('data-color', SX_COLORS[i % SX_COLORS.length]);
         let dl='', dd='';
         if (ev.date) { const dt = new Date(ev.date+'T12:00:00'); dl = dn[dt.getDay()]; dd = dt.getDate(); }
         const k = `${ev.name}-${ev.date}`, is_t = tracked.has(k);
