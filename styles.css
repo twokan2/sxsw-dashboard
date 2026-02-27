@@ -10,9 +10,10 @@
     /* SXSW Palette */
     --sx-dark:   #001e1e;
     --sx-green:  #59be79;
-    --sx-gray:   #b1b6ba;
+    --sx-gray:   #6a7278;
     --sx-blue:   #50afe8;
     --sx-orange: #f97c3c;
+    --sx-purple: #a855f7;
 
     /* Light theme surfaces */
     --bg-page: #ffffff;
@@ -23,9 +24,9 @@
 
     /* Text */
     --text-primary: var(--sx-dark);
-    --text-secondary: #3d5a5a;
-    --text-muted: #7d9494;
-    --text-light: #a3b5b5;
+    --text-secondary: #2d4a4a;
+    --text-muted: #5a7272;
+    --text-light: #7a9494;
 
     --radius-sm: 8px;
     --radius-md: 14px;
@@ -132,8 +133,8 @@ a:hover { color: var(--sx-orange); }
     cursor: pointer;
     transition: all 0.3s var(--ease-out);
 }
-.music-toggle:hover { border-color: var(--sx-green); color: var(--text-secondary); }
-.music-toggle.playing { border-color: var(--sx-green); color: var(--sx-green); background: rgba(89,190,121,0.08); }
+.music-toggle:hover { border-color: var(--sx-purple); color: var(--sx-purple); }
+.music-toggle.playing { border-color: var(--sx-purple); color: var(--sx-purple); background: rgba(168,85,247,0.08); }
 .music-toggle svg { flex-shrink: 0; }
 
 .music-toggle.playing::after {
@@ -141,10 +142,10 @@ a:hover { color: var(--sx-orange); }
     display: inline-block;
     width: 14px; height: 10px; margin-left: 4px;
     background:
-        linear-gradient(var(--sx-green), var(--sx-green)) 0 100% / 2px 40% no-repeat,
-        linear-gradient(var(--sx-green), var(--sx-green)) 4px 100% / 2px 70% no-repeat,
-        linear-gradient(var(--sx-green), var(--sx-green)) 8px 100% / 2px 50% no-repeat,
-        linear-gradient(var(--sx-green), var(--sx-green)) 12px 100% / 2px 90% no-repeat;
+        linear-gradient(var(--sx-purple), var(--sx-purple)) 0 100% / 2px 40% no-repeat,
+        linear-gradient(var(--sx-purple), var(--sx-purple)) 4px 100% / 2px 70% no-repeat,
+        linear-gradient(var(--sx-purple), var(--sx-purple)) 8px 100% / 2px 50% no-repeat,
+        linear-gradient(var(--sx-purple), var(--sx-purple)) 12px 100% / 2px 90% no-repeat;
     animation: eq 0.8s ease-in-out infinite alternate;
 }
 @keyframes eq {
