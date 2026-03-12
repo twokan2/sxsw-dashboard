@@ -13,12 +13,12 @@
 </head>
 <body>
     <canvas id="starfield"></canvas>
-
+ 
     <!-- Background music — commit vibe.mp3 (Metro Boomin - Take Me Thru Dere) to repo root -->
     <audio id="bgMusic" loop preload="none">
         <source src="vibe.mp3" type="audio/mpeg">
     </audio>
-
+ 
     <div class="page-wrapper">
         <header class="site-header">
             <div class="header-accent"></div>
@@ -27,7 +27,7 @@
                 <h1 class="site-title">The Errant — ATX</h1>
                 <p class="site-subtitle">take me thru there</p>
                 <p class="header-tagline">all together now</p>
-
+ 
                 <button class="music-toggle" id="musicToggle" title="Play / Pause vibes" aria-label="Toggle background music">
                     <svg class="music-icon-off" id="musicIconOff" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
                         <path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/>
@@ -41,7 +41,7 @@
             </div>
             <div class="header-accent"></div>
         </header>
-
+ 
         <!-- TAB NAV -->
         <nav class="tab-nav">
             <button class="tab-btn active" data-tab="all">all events</button>
@@ -51,7 +51,7 @@
                 <span class="tab-badge" id="myEventsCount"></span>
             </button>
         </nav>
-
+ 
         <!-- CONTROLS (only visible on "all" tab) -->
         <section class="controls" id="filterSection">
             <div class="controls-row">
@@ -73,7 +73,7 @@
                 </div>
             </div>
         </section>
-
+ 
         <section class="stats-bar">
             <div class="stat"><span class="stat-num" id="totalEvents">—</span><span class="stat-label">events</span></div>
             <div class="stat-divider">✦</div>
@@ -83,36 +83,36 @@
             <div class="stat-divider">✦</div>
             <div class="stat"><span class="stat-num" id="daysUntil">—</span><span class="stat-label">days out</span></div>
         </section>
-
+ 
         <nav class="date-nav" id="dateNav"></nav>
-
+ 
         <main class="events-grid" id="eventsGrid">
             <div class="loading-state" id="loadingState">
                 <div class="loader"></div>
                 <p>pulling up the vibes...</p>
             </div>
         </main>
-
+ 
         <div class="error-state" id="errorState" style="display:none;">
             <p class="state-emoji">⚡</p>
             <p class="error-msg" id="errorMsg">Can't reach the sheet right now.</p>
             <button class="btn-refresh" onclick="loadEvents()">run it back</button>
         </div>
-
+ 
         <!-- Empty state: no filter matches (all / upnext tabs) -->
         <div class="empty-state" id="emptyState" style="display:none;">
             <p class="state-emoji">🌙</p>
             <p>nothing matches — try a different vibe</p>
             <button class="btn-ghost" onclick="clearAllFilters()">wipe it</button>
         </div>
-
+ 
         <!-- Empty state: nothing saved yet (my events tab) -->
         <div class="empty-state" id="emptyStateMine" style="display:none;">
             <p class="state-emoji">✦</p>
             <p>nothing locked in yet</p>
             <p class="empty-sub">tap "take me thru dere" on any event to save it here</p>
         </div>
-
+ 
         <footer class="site-footer">
             <div class="footer-actions">
                 <button class="btn-export" id="exportExcel"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg> xlsx</button>
@@ -124,7 +124,7 @@
             </div>
         </footer>
     </div>
-
+ 
     <script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
     <script src="script.js"></script>
 </body>
