@@ -1,6 +1,6 @@
 // THE ERRANT — ATX · V8 · All Together Now
 // New in V8:
-//   - "take me thru dere" save button (renamed from "that's a bet")
+//   - "take me thru dere" save button
 //   - .ics calendar download on save (opens native calendar on mobile)
 //   - "Up Next" tab: upcoming events sorted chronologically
 //   - "My Events" tab: personal saved schedule (localStorage, no account)
@@ -16,7 +16,7 @@ const SX_COLORS = ['green', 'blue', 'orange', 'gray', 'dark'];
 let allEvents = [];
 let activeVibeFilter = null;
 let activeDateFilter = null;
-let currentTab = 'all'; // 'all' | 'upnext' | 'mine'
+let currentTab = 'all';
 
 // === MUSIC PLAYER ===
 (function () {
@@ -127,13 +127,11 @@ function parseCSV(csv) {
 
 // === DATE / TIME HELPERS ===
 function parseEventDate(ev) {
-    // date is "M/D/YYYY" from sheet
     if (!ev.date) return null;
     const parts = ev.date.split('/');
     if (parts.length === 3) {
         return new Date(parseInt(parts[2]), parseInt(parts[0]) - 1, parseInt(parts[1]));
     }
-    // fallback: try ISO
     const d = new Date(ev.date + 'T12:00:00');
     return isNaN(d) ? null : d;
 }
@@ -144,17 +142,14 @@ function parseEventDateTime(ev) {
     if (ev.time && ev.time !== 'TBD') {
         const match = ev.time.match(/(\d+):(\d+)\s*(AM|PM)/i);
         if (match) {
-            let h = parseInt(match[1]);
-            const m = parseInt(match[2]);
-            const ampm = match[3].toUpperCase();
-            if (ampm === 'PM' && h !== 12) h += 12;
-            if (ampm === 'AM' && h === 12) h = 0;
-            d.setHours(h, m, 0, 0);
-            return d;
+            let h = parseInt(match[1]); const m = parseInt(match[2]);
+            const ap = match[3].toUpperCase();
+            if (ap === 'PM' && h !== 12) h += 12;
+            if (ap === 'AM' && h === 12) h = 0;
+            d.setHours(h, m, 0, 0); return d;
         }
     }
-    d.setHours(23, 59, 0, 0); // unknown time = treat as end of day (not past)
-    return d;
+    d.setHours(23, 59, 0, 0); return d;
 }
 
 function isEventPast(ev) {
@@ -176,18 +171,12 @@ function updateStats() {
     document.getElementById('rsvpCount').textContent = t.size;
 }
 
-// === VIBE FILTERS — only show vibes with upcoming events ===
+// === VIBE FILTERS ===
 function buildVibeFilters() {
-    const today = todayMidnight();
-    // Vibes that have at least one non-past event
-    const activeVibes = new Set(
-        allEvents.filter(e => !isEventPast(e)).map(e => e.vibe)
-    );
-    // If all events are past (SXSW is over), show all vibes anyway
+    const activeVibes = new Set(allEvents.filter(e => !isEventPast(e)).map(e => e.vibe));
     const vibes = activeVibes.size > 0
         ? [...new Set(allEvents.map(e => e.vibe))].filter(v => activeVibes.has(v)).sort()
         : [...new Set(allEvents.map(e => e.vibe))].sort();
-
     const c = document.getElementById('vibeFilters'); c.innerHTML = '';
     vibes.forEach(v => {
         const b = document.createElement('button');
@@ -206,20 +195,16 @@ function buildVibeFilters() {
     });
 }
 
-// === DATE NAV — hide past days ===
+// === DATE NAV ===
 function buildDateNav() {
     const today = todayMidnight();
     const dates = [...new Set(allEvents.map(e => e.date).filter(Boolean))].sort();
     const nav = document.getElementById('dateNav'); nav.innerHTML = '';
     const dn = ['sun','mon','tue','wed','thu','fri','sat'];
     const mn = ['jan','feb','mar','apr','may','jun','jul','aug','sep','oct','nov','dec'];
-
     dates.forEach(ds => {
         const dt = parseEventDate({ date: ds });
-        if (!dt) return;
-        // Hide past days
-        if (dt < today) return;
-
+        if (!dt || dt < today) return;
         const cnt = allEvents.filter(e => e.date === ds).length;
         const ch = document.createElement('button');
         ch.className = 'date-chip';
@@ -247,7 +232,6 @@ function bindTabs() {
             currentTab = btn.dataset.tab;
             document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
             btn.classList.add('active');
-            // Filter bar only shows on 'all' tab
             const filterSection = document.getElementById('filterSection');
             if (filterSection) filterSection.style.display = currentTab === 'all' ? '' : 'none';
             renderEvents(getTabEvents());
@@ -275,7 +259,6 @@ function getTabEvents() {
                 return da - db;
             });
     }
-    // 'all' — apply active filters
     return applyFilters(true);
 }
 
@@ -287,7 +270,6 @@ function renderEvents(events) {
     grid.innerHTML = '';
     document.getElementById('errorState').style.display = 'none';
     if (emptyMine) emptyMine.style.display = 'none';
-
     if (!events.length) {
         grid.style.display = 'none';
         if (currentTab === 'mine') {
@@ -299,25 +281,20 @@ function renderEvents(events) {
         return;
     }
     grid.style.display = 'grid'; empty.style.display = 'none';
-
     const tracked = getTracked();
     const dn = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
-
     events.forEach((ev, i) => {
         const card = document.createElement('article');
         card.className = 'event-card';
         if (isEventPast(ev)) card.classList.add('event-past');
         card.style.animationDelay = `${Math.min(i * 0.05, 0.8)}s`;
         card.setAttribute('data-color', SX_COLORS[i % SX_COLORS.length]);
-
         let dl = '', dd = '';
         const dt = parseEventDate(ev);
         if (dt) { dl = dn[dt.getDay()]; dd = dt.getDate(); }
-
         const k = `${ev.name}-${ev.date}`;
         const is_t = tracked.has(k);
         const cost = ev.cost.toLowerCase() === 'free' ? 'Free ✦' : ev.cost;
-
         card.innerHTML = `
             <div class="card-date-strip">
                 <span class="card-day">${dl}</span>
@@ -348,13 +325,11 @@ function renderEvents(events) {
                     </button>
                 </div>
             </div>`;
-
         card.querySelector('.btn-bet').addEventListener('click', function () {
             toggleTrack(k, this, ev);
         });
         grid.appendChild(card);
     });
-
     updateMyEventsCount();
 }
 
@@ -377,13 +352,11 @@ function toggleTrack(k, btn, ev) {
         btn.classList.add('locked');
         btn.querySelector('svg').setAttribute('fill', 'currentColor');
         if (lb) lb.textContent = "take me thru dere ✓";
-        // Download .ics so it opens native calendar on mobile
         if (ev) downloadICS(ev);
     }
     localStorage.setItem(STORAGE_KEY, JSON.stringify([...t]));
     updateStats();
     updateMyEventsCount();
-    // If on My Events tab, re-render
     if (currentTab === 'mine') renderEvents(getTabEvents());
 }
 
@@ -391,135 +364,4 @@ function updateMyEventsCount() {
     const badge = document.getElementById('myEventsCount');
     if (!badge) return;
     const n = getTracked().size;
-    badge.textContent = n > 0 ? n : '';
-}
-
-// === .ICS CALENDAR EXPORT ===
-function formatICS(dateStr, timeStr) {
-    // dateStr: "M/D/YYYY"
-    if (!dateStr) return null;
-    const parts = dateStr.split('/');
-    if (parts.length < 3) return null;
-    const month = parts[0].padStart(2, '0');
-    const day = parts[1].padStart(2, '0');
-    const year = parts[2];
-    let h = 9, m = 0;
-    if (timeStr && timeStr !== 'TBD') {
-        const match = timeStr.match(/(\d+):(\d+)\s*(AM|PM)/i);
-        if (match) {
-            h = parseInt(match[1]); m = parseInt(match[2]);
-            const ap = match[3].toUpperCase();
-            if (ap === 'PM' && h !== 12) h += 12;
-            if (ap === 'AM' && h === 12) h = 0;
-        }
-    }
-    return `${year}${month}${day}T${String(h).padStart(2,'0')}${String(m).padStart(2,'0')}00`;
-}
-
-function downloadICS(ev) {
-    const dtStart = formatICS(ev.date, ev.time);
-    if (!dtStart) return;
-    // Default 2hr duration
-    const endH = String(parseInt(dtStart.substring(9, 11)) + 2).padStart(2, '0');
-    const dtEnd = dtStart.substring(0, 9) + endH + dtStart.substring(11);
-    const uid = `errant-atx-${encodeURIComponent(ev.name)}-${ev.date}@sxsw2026`;
-    const loc = (ev.location || '').replace(/,/g, '\\,');
-    const summary = (ev.name || '').replace(/,/g, '\\,');
-    const url = ev.joinLink || ev.link || '';
-
-    const ics = [
-        'BEGIN:VCALENDAR', 'VERSION:2.0',
-        'PRODID:-//The Errant ATX//SXSW 2026//EN',
-        'BEGIN:VEVENT',
-        `UID:${uid}`,
-        `SUMMARY:${summary}`,
-        `DTSTART:${dtStart}`,
-        `DTEND:${dtEnd}`,
-        `LOCATION:${loc}`,
-        url ? `URL:${url}` : '',
-        'END:VEVENT', 'END:VCALENDAR'
-    ].filter(Boolean).join('\r\n');
-
-    const blob = new Blob([ics], { type: 'text/calendar;charset=utf-8' });
-    const a = document.createElement('a');
-    a.href = URL.createObjectURL(blob);
-    a.download = `${(ev.name || 'event').replace(/[^a-z0-9]/gi, '-').toLowerCase()}.ics`;
-    document.body.appendChild(a); a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(a.href);
-}
-
-// === FILTERS ===
-function applyFilters(returnOnly = false) {
-    const s = document.getElementById('searchInput').value.toLowerCase().trim();
-    const d = activeDateFilter || document.getElementById('dateFilter').value;
-    let f = allEvents;
-    if (s) f = f.filter(e =>
-        e.name.toLowerCase().includes(s) || e.vibe.toLowerCase().includes(s) ||
-        e.location.toLowerCase().includes(s) || e.cost.toLowerCase().includes(s)
-    );
-    if (d) f = f.filter(e => e.date === d);
-    if (activeVibeFilter) f = f.filter(e => e.vibe.toLowerCase() === activeVibeFilter.toLowerCase());
-    if (returnOnly) return f;
-    renderEvents(f);
-}
-
-function clearAllFilters() {
-    document.getElementById('searchInput').value = '';
-    document.getElementById('dateFilter').value = '';
-    activeVibeFilter = null; activeDateFilter = null;
-    document.querySelectorAll('.vibe-btn').forEach(b => b.classList.remove('active'));
-    document.querySelectorAll('.date-chip').forEach(c => c.classList.remove('active'));
-    renderEvents(allEvents);
-}
-
-// === CONTROLS ===
-function bindControls() {
-    document.getElementById('searchInput').addEventListener('input', debounce(applyFilters, 200));
-    document.getElementById('dateFilter').addEventListener('change', () => {
-        activeDateFilter = document.getElementById('dateFilter').value || null;
-        document.querySelectorAll('.date-chip').forEach(c => c.classList.remove('active'));
-        applyFilters();
-    });
-    document.getElementById('clearFilters').addEventListener('click', clearAllFilters);
-    document.getElementById('viewAll').addEventListener('click', clearAllFilters);
-    document.getElementById('refreshBtn').addEventListener('click', () => {
-        allEvents = []; activeVibeFilter = null; activeDateFilter = null;
-        document.getElementById('searchInput').value = '';
-        document.getElementById('dateFilter').value = '';
-        loadEvents();
-    });
-    document.getElementById('exportExcel').addEventListener('click', exportXlsx);
-    document.getElementById('exportCSV').addEventListener('click', exportCsv);
-}
-
-// === EXPORT ===
-function fmt(e) {
-    return { Date: e.date, Time: e.time, 'Event Name': e.name, Location: e.location, Vibe: e.vibe, Cost: e.cost, Link: e.joinLink || e.link };
-}
-function exportXlsx() {
-    if (!allEvents.length) return;
-    const ws = XLSX.utils.json_to_sheet(allEvents.map(fmt));
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, 'SXSW 2026');
-    XLSX.writeFile(wb, 'the-errant-atx-sxsw-2026.xlsx');
-}
-function exportCsv() {
-    if (!allEvents.length) return;
-    const ws = XLSX.utils.json_to_sheet(allEvents.map(fmt));
-    const csv = XLSX.utils.sheet_to_csv(ws);
-    const b = new Blob([csv], { type: 'text/csv' });
-    const u = URL.createObjectURL(b);
-    const a = document.createElement('a');
-    a.href = u; a.download = 'the-errant-atx-sxsw-2026.csv';
-    a.click(); URL.revokeObjectURL(u);
-}
-
-// === UTIL ===
-function esc(s) {
-    if (!s) return '';
-    const d = document.createElement('div'); d.textContent = s; return d.innerHTML;
-}
-function debounce(fn, ms) {
-    let t; return (...a) => { clearTimeout(t); t = setTimeout(() => fn(...a), ms); };
-}
+    b
