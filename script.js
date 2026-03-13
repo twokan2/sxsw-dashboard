@@ -61,6 +61,7 @@ function toggleSave(eventId) {
     downloadICS(event);
   }
   updateMyEventsCount();
+  updateStatsBar();
 }
 
 function updateSaveButtons(eventId, saved) {
@@ -274,6 +275,27 @@ async function fetchEvents() {
   buildVibeFilters();
   renderCards();
   updateMyEventsCount();
+  updateStatsBar();
+}
+
+
+// ── STATS BAR ───────────────────────────────────────────────
+
+function updateStatsBar() {
+  const total = document.getElementById('totalEvents');
+  const free = document.getElementById('freeEvents');
+  const locked = document.getElementById('rsvpCount');
+  const days = document.getElementById('daysUntil');
+  
+  if (total) total.textContent = allEvents.length;
+  if (free) free.textContent = allEvents.filter(e => (e.cost||'').toLowerCase() === 'free' || e.freeDrinks || e.freeFood).length;
+  if (locked) locked.textContent = savedEventIds.size;
+  
+  if (days) {
+    const sxswStart = new Date('2026-03-12T00:00:00');
+    const diff = Math.ceil((sxswStart - new Date()) / 864e5);
+    days.textContent = diff > 0 ? diff : diff === 0 ? '🔥' : '🔴';
+  }
 }
 
 // ── FILTER LOGIC ─────────────────────────────────────────────
@@ -339,7 +361,7 @@ function renderCards() {
     return;
   }
 
-  container.innerHTML = events.map(event => buildCard(event)).join('');
+  container.innerHTML = events.map((event, i) => buildCard(event, i)).join('');
 
   // Wire up save buttons
   container.querySelectorAll('.save-btn').forEach(btn => {
@@ -357,39 +379,62 @@ function renderCards() {
   });
 }
 
-function buildCard(event) {
+function buildCard(event, index) {
   const past = isEventPast(event);
   const saved = savedEventIds.has(event.id);
-  const vibeClass = (event.vibe || 'experience').toLowerCase().replace(/[^a-z]/g, '-');
+  const SX_COLORS = ['green','blue','orange','gray','dark'];
+  const color = SX_COLORS[(index || 0) % SX_COLORS.length];
   const pastClass = past ? ' event-past' : '';
-  const staffBadge = event.staffPick ? '<span class="badge staff-pick">✦ staff pick</span>' : '';
-  const freeDrinkBadge = event.freeDrinks ? '<span class="badge free-drinks">🍹 free drinks</span>' : '';
-  const freeFoodBadge = event.freeFood ? '<span class="badge free-food">🍽 free food</span>' : '';
-  const rsvpLink = event.rsvpLink || event.link;
-  const rsvpBtn = rsvpLink
-    ? `<a class="rsvp-link" href="${escHtml(rsvpLink)}" target="_blank" rel="noopener">rsvp ↗</a>`
-    : '';
+
+  // Parse date for the date strip
+  let dayLabel = '', dateNum = '';
+  const dn = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+  if (event.date) {
+    let dt;
+    if (event.date.includes('-')) {
+      dt = new Date(event.date + 'T12:00:00');
+    } else if (event.date.includes('/')) {
+      const p = event.date.split('/');
+      dt = new Date(parseInt(p[2]), parseInt(p[0])-1, parseInt(p[1]), 12, 0, 0);
+    }
+    if (dt && !isNaN(dt)) {
+      dayLabel = dn[dt.getDay()];
+      dateNum = dt.getDate();
+    }
+  }
+
+  const cost = (event.cost || 'Free').toLowerCase() === 'free' ? 'Free ✦' : escHtml(event.cost);
+  const rsvpLink = event.rsvpLink || event.link || '';
+
+  // Badges
+  let badges = '';
+  if (event.freeDrinks) badges += '<span class="badge free-drinks">🍹 free drinks</span>';
+  if (event.freeFood) badges += '<span class="badge free-food">🍽 free food</span>';
+  if (event.staffPick) badges += '<span class="badge staff-pick">✦ staff pick</span>';
 
   return `
-    <div class="event-card vibe-${vibeClass}${pastClass}" data-id="${escHtml(event.id)}">
-      <div class="card-top">
-        <div class="card-meta">
-          <span class="card-date">${escHtml(event.date)}</span>
-          <span class="card-time">${escHtml(event.time)}</span>
+    <article class="event-card${pastClass}" data-color="${color}" data-id="${escHtml(event.id)}">
+      <div class="card-date-strip">
+        <span class="card-day">${escHtml(dayLabel)}</span>
+        <span class="card-date-num">${dateNum}</span>
+      </div>
+      <div class="card-body">
+        <div class="card-vibe-tag">${escHtml(event.vibe || 'Event')}</div>
+        <h3 class="card-title">${escHtml(event.name)}</h3>
+        ${badges ? '<div class="card-badges">' + badges + '</div>' : ''}
+        <div class="card-details">
+          <div class="card-detail"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg><span>${escHtml(event.time || 'TBD')}</span></div>
+          <div class="card-detail"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg><span>${escHtml(event.location || 'TBD')}</span></div>
+          <div class="card-detail"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg><span>${cost}</span></div>
         </div>
-        <span class="card-vibe vibe-tag-${vibeClass}">${escHtml(event.vibe)}</span>
+        <div class="card-actions">
+          ${rsvpLink ? '<a class="btn-tapin" href="' + escHtml(rsvpLink) + '" target="_blank" rel="noopener">tap in</a>' : ''}
+          <button class="save-btn${saved ? ' saved' : ''}" data-id="${escHtml(event.id)}">
+            ${saved ? 'Locked In' : "it's a vibe"}
+          </button>
+        </div>
       </div>
-      <div class="card-name">${escHtml(event.name)}</div>
-      <div class="card-location">${escHtml(event.location)}</div>
-      <div class="card-badges">${staffBadge}${freeDrinkBadge}${freeFoodBadge}</div>
-      ${event.notes ? `<div class="card-notes">${escHtml(event.notes)}</div>` : ''}
-      <div class="card-actions">
-        ${rsvpBtn}
-        <button class="save-btn${saved ? ' saved' : ''}" data-id="${escHtml(event.id)}">
-          ${saved ? 'Locked In' : "it's a vibe"}
-        </button>
-      </div>
-    </div>
+    </article>
   `;
 }
 
@@ -718,7 +763,7 @@ function renderMap() {
   if (!leafletMap) {
     leafletMap = L.map('map').setView([30.2672, -97.7431], 14);
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      attribution: '\u00a9 OpenStreetMap', maxZoom: 19
+      attribution: '© OpenStreetMap', maxZoom: 19
     }).addTo(leafletMap);
   }
   mapMarkers.forEach(m => leafletMap.removeLayer(m));
@@ -726,7 +771,7 @@ function renderMap() {
 
   const colors = ['#59be79','#50afe8','#f97c3c','#a855f7','#001e1e'];
   const bounds = [];
-  savedEvents.forEach((event, i) => {
+  savedEvents.forEach(function(event, i) {
     const color = colors[i % colors.length];
     const icon = L.divIcon({
       className: 'map-pin',
@@ -737,16 +782,16 @@ function renderMap() {
     const dirs = 'https://maps.google.com/maps?daddr='+event.latitude+','+event.longitude;
     const popup = '<div style="font-family:Aptos,sans-serif;max-width:220px;">'
       + '<strong style="font-size:13px;">'+escHtml(event.name)+'</strong><br>'
-      + '<span style="font-size:11px;color:#5a7272;">'+escHtml(event.date)+' \u00b7 '+escHtml(event.time)+'</span><br>'
-      + '<span style="font-size:11px;color:#5a7272;">\ud83d\udccd '+escHtml(event.location)+'</span><br>'
-      + (event.freeDrinks ? '<span style="font-size:10px;">\ud83c\udf79 free drinks</span> ' : '')
-      + (event.freeFood ? '<span style="font-size:10px;">\ud83c\udf7d free food</span> ' : '')
-      + (event.staffPick ? '<span style="font-size:10px;">\u2726 staff pick</span>' : '')
+      + '<span style="font-size:11px;color:#5a7272;">'+escHtml(event.date)+' · '+escHtml(event.time)+'</span><br>'
+      + '<span style="font-size:11px;color:#5a7272;">📍 '+escHtml(event.location)+'</span><br>'
+      + (event.freeDrinks ? '<span style="font-size:10px;">🍹 free drinks</span> ' : '')
+      + (event.freeFood ? '<span style="font-size:10px;">🍽 free food</span> ' : '')
+      + (event.staffPick ? '<span style="font-size:10px;">✦ staff pick</span>' : '')
       + '<div style="margin-top:6px;display:flex;gap:6px;">'
-      + (rsvpLink ? '<a href="'+escHtml(rsvpLink)+'" target="_blank" style="font-size:11px;color:#50afe8;">rsvp \u2197</a>' : '')
-      + '<a href="'+dirs+'" target="_blank" style="font-size:11px;color:#f97c3c;">directions \u2197</a>'
+      + (rsvpLink ? '<a href="'+escHtml(rsvpLink)+'" target="_blank" style="font-size:11px;color:#50afe8;">rsvp ↗</a>' : '')
+      + '<a href="'+dirs+'" target="_blank" style="font-size:11px;color:#f97c3c;">directions ↗</a>'
       + '</div></div>';
-    const marker = L.marker([event.latitude, event.longitude], {icon}).bindPopup(popup).addTo(leafletMap);
+    const marker = L.marker([event.latitude, event.longitude], {icon: icon}).bindPopup(popup).addTo(leafletMap);
     mapMarkers.push(marker);
     bounds.push([event.latitude, event.longitude]);
   });
