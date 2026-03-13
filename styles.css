@@ -334,7 +334,7 @@ a:hover { color: var(--sx-orange); }
 .card-detail { display: flex; align-items: flex-start; gap: 8px; font-size: 0.76rem; color: var(--text-secondary); line-height: 1.4; }
 .card-detail svg { flex-shrink: 0; margin-top: 2px; color: var(--text-light); }
 
-.card-actions { display: flex; align-items: center; gap: 8px; margin-top: 6px; }
+.card-actions { display: flex; align-items: center; gap: 8px; margin-top: 6px; flex-wrap: wrap; }
 
 .btn-tapin {
     display: inline-flex; align-items: center; gap: 6px;
@@ -360,8 +360,7 @@ a:hover { color: var(--sx-orange); }
 .btn-bet:hover { border-color: var(--sx-blue); color: var(--sx-blue); }
 .btn-bet.locked { background: rgba(80,175,232,0.08); border-color: var(--sx-blue); color: var(--sx-blue); font-weight: 600; }
 .btn-bet.locked svg { fill: var(--sx-blue); }
-.btn-bet-label { display: none; }
-@media (min-width: 420px) { .btn-bet-label { display: inline; } }
+.btn-bet-label { display: inline; }
 
 .loading-state {
     display: flex; flex-direction: column; align-items: center; justify-content: center;
@@ -468,8 +467,6 @@ a:hover { color: var(--sx-orange); }
     transition: all 0.2s;
 }
 .tab-badge:empty { display: none; }
-
-@media (min-width: 420px) { .btn-bet { min-width: 160px; } }
 
 .event-past { opacity: 0.4; }
 .event-past .btn-bet { display: none; }
