@@ -263,7 +263,7 @@ async function fetchEvents() {
     if (!res.ok) throw new Error('Sheet fetch failed');
     const text = await res.text();
     const rows = parseCSV(text);
-    allEvents = rows.map(normalizeEvent).filter(e => e.name);
+    allEvents = rows.map(normalizeEvent).filter(function(e) { return e.name && e.name !== 'Event Name' && e.name.trim() !== ''; });
     showError(false);
   } catch (err) {
     console.error(err);
@@ -280,20 +280,17 @@ async function fetchEvents() {
 
 
 // ── STATS BAR ───────────────────────────────────────────────
-
 function updateStatsBar() {
-  const total = document.getElementById('totalEvents');
-  const free = document.getElementById('freeEvents');
-  const locked = document.getElementById('rsvpCount');
-  const days = document.getElementById('daysUntil');
-  
+  var total = document.getElementById('totalEvents');
+  var free = document.getElementById('freeEvents');
+  var locked = document.getElementById('rsvpCount');
+  var days = document.getElementById('daysUntil');
   if (total) total.textContent = allEvents.length;
-  if (free) free.textContent = allEvents.filter(e => (e.cost||'').toLowerCase() === 'free' || e.freeDrinks || e.freeFood).length;
+  if (free) free.textContent = allEvents.filter(function(e) { return (e.cost||'').toLowerCase() === 'free' || e.freeDrinks || e.freeFood; }).length;
   if (locked) locked.textContent = savedEventIds.size;
-  
   if (days) {
-    const sxswStart = new Date('2026-03-12T00:00:00');
-    const diff = Math.ceil((sxswStart - new Date()) / 864e5);
+    var sxswStart = new Date('2026-03-12T00:00:00');
+    var diff = Math.ceil((sxswStart - new Date()) / 864e5);
     days.textContent = diff > 0 ? diff : diff === 0 ? '🔥' : '🔴';
   }
 }
@@ -361,7 +358,16 @@ function renderCards() {
     return;
   }
 
-  container.innerHTML = events.map((event, i) => buildCard(event, i)).join('');
+  // Sort all events by date then time
+    events.sort(function(a, b) {
+      var da = parseEventDateTime(a);
+      var db = parseEventDateTime(b);
+      if (!da && !db) return 0;
+      if (!da) return 1;
+      if (!db) return -1;
+      return da - db;
+    });
+    container.innerHTML = events.map(function(event, i) { return buildCard(event, i); }).join('');
 
   // Wire up save buttons
   container.querySelectorAll('.save-btn').forEach(btn => {
@@ -380,62 +386,57 @@ function renderCards() {
 }
 
 function buildCard(event, index) {
-  const past = isEventPast(event);
-  const saved = savedEventIds.has(event.id);
-  const SX_COLORS = ['green','blue','orange','gray','dark'];
-  const color = SX_COLORS[(index || 0) % SX_COLORS.length];
-  const pastClass = past ? ' event-past' : '';
+  var past = isEventPast(event);
+  var saved = savedEventIds.has(event.id);
+  var SX_COLORS = ['green','blue','orange','gray','dark'];
+  var color = SX_COLORS[(index || 0) % SX_COLORS.length];
+  var pastClass = past ? ' event-past' : '';
 
-  // Parse date for the date strip
-  let dayLabel = '', dateNum = '';
-  const dn = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+  // Parse date for date strip
+  var dayLabel = '', dateNum = '';
+  var dn = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
   if (event.date) {
-    let dt;
+    var dt = null;
     if (event.date.includes('-')) {
       dt = new Date(event.date + 'T12:00:00');
     } else if (event.date.includes('/')) {
-      const p = event.date.split('/');
+      var p = event.date.split('/');
       dt = new Date(parseInt(p[2]), parseInt(p[0])-1, parseInt(p[1]), 12, 0, 0);
     }
-    if (dt && !isNaN(dt)) {
+    if (dt && !isNaN(dt.getTime())) {
       dayLabel = dn[dt.getDay()];
       dateNum = dt.getDate();
     }
   }
 
-  const cost = (event.cost || 'Free').toLowerCase() === 'free' ? 'Free ✦' : escHtml(event.cost);
-  const rsvpLink = event.rsvpLink || event.link || '';
+  var cost = (event.cost || 'Free').toLowerCase() === 'free' ? 'Free ✦' : escHtml(event.cost);
+  var rsvpLink = event.rsvpLink || event.link || '';
 
   // Badges
-  let badges = '';
+  var badges = '';
   if (event.freeDrinks) badges += '<span class="badge free-drinks">🍹 free drinks</span>';
   if (event.freeFood) badges += '<span class="badge free-food">🍽 free food</span>';
   if (event.staffPick) badges += '<span class="badge staff-pick">✦ staff pick</span>';
 
-  return `
-    <article class="event-card${pastClass}" data-color="${color}" data-id="${escHtml(event.id)}">
-      <div class="card-date-strip">
-        <span class="card-day">${escHtml(dayLabel)}</span>
-        <span class="card-date-num">${dateNum}</span>
-      </div>
-      <div class="card-body">
-        <div class="card-vibe-tag">${escHtml(event.vibe || 'Event')}</div>
-        <h3 class="card-title">${escHtml(event.name)}</h3>
-        ${badges ? '<div class="card-badges">' + badges + '</div>' : ''}
-        <div class="card-details">
-          <div class="card-detail"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg><span>${escHtml(event.time || 'TBD')}</span></div>
-          <div class="card-detail"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg><span>${escHtml(event.location || 'TBD')}</span></div>
-          <div class="card-detail"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg><span>${cost}</span></div>
-        </div>
-        <div class="card-actions">
-          ${rsvpLink ? '<a class="btn-tapin" href="' + escHtml(rsvpLink) + '" target="_blank" rel="noopener">tap in</a>' : ''}
-          <button class="save-btn${saved ? ' saved' : ''}" data-id="${escHtml(event.id)}">
-            ${saved ? 'Locked In' : "it's a vibe"}
-          </button>
-        </div>
-      </div>
-    </article>
-  `;
+  // RSVP button (only if link exists)
+  var rsvpBtn = rsvpLink ? '<a class="btn-tapin" href="' + escHtml(rsvpLink) + '" target="_blank" rel="noopener">tap in</a>' : '';
+
+  // Save button — ALWAYS present on every card
+  var saveBtn = '<button class="save-btn' + (saved ? ' saved' : '') + '" data-id="' + escHtml(event.id) + '">' + (saved ? 'Locked In' : "it's a vibe") + '</button>';
+
+  return '<article class="event-card' + pastClass + '" data-color="' + color + '" data-id="' + escHtml(event.id) + '">'
+    + '<div class="card-date-strip"><span class="card-day">' + escHtml(dayLabel) + '</span><span class="card-date-num">' + dateNum + '</span></div>'
+    + '<div class="card-body">'
+    + '<div class="card-vibe-tag">' + escHtml(event.vibe || 'Event') + '</div>'
+    + '<h3 class="card-title">' + escHtml(event.name) + '</h3>'
+    + (badges ? '<div class="card-badges">' + badges + '</div>' : '')
+    + '<div class="card-details">'
+    + '<div class="card-detail"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg><span>' + escHtml(event.time || 'TBD') + '</span></div>'
+    + '<div class="card-detail"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg><span>' + escHtml(event.location || 'TBD') + '</span></div>'
+    + '<div class="card-detail"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg><span>' + cost + '</span></div>'
+    + '</div>'
+    + '<div class="card-actions">' + rsvpBtn + saveBtn + '</div>'
+    + '</div></article>';
 }
 
 function escHtml(str) {
@@ -451,16 +452,16 @@ function escHtml(str) {
 
 function switchTab(tab) {
   currentTab = tab;
-  document.querySelectorAll('.tab-btn').forEach(btn => {
+  document.querySelectorAll('.tab-btn').forEach(function(btn) {
     btn.classList.toggle('active', btn.dataset.tab === tab);
   });
-  const filterBar = document.getElementById('filter-bar');
+  var filterBar = document.getElementById('filter-bar');
   if (filterBar) filterBar.style.display = (tab === 'all') ? '' : 'none';
-  const statsBar = document.getElementById('stats-bar');
+  var statsBar = document.getElementById('stats-bar');
   if (statsBar) statsBar.style.display = (tab === 'map') ? 'none' : '';
-  const mapEl = document.getElementById('map-container');
-  const eventsEl = document.getElementById('events-container');
-  const emptyMap = document.getElementById('empty-map');
+  var mapEl = document.getElementById('map-container');
+  var eventsEl = document.getElementById('events-container');
+  var emptyMap = document.getElementById('empty-map');
   if (mapEl) mapEl.style.display = (tab === 'map') ? '' : 'none';
   if (eventsEl) eventsEl.style.display = (tab === 'map') ? 'none' : '';
   if (emptyMap) emptyMap.style.display = 'none';
@@ -527,6 +528,8 @@ function buildVibeFilters() {
     ? [...upcomingVibes]
     : [...new Set(allEvents.map(e => e.vibe).filter(Boolean))];
 
+  // Filter out garbage vibes (long strings, coordinates, etc)
+  vibes = vibes.filter(function(v) { return v.length < 30 && !v.includes(',') && !v.includes('30.2'); });
   vibes.sort();
 
   container.innerHTML = vibes.map(vibe => {
@@ -738,20 +741,20 @@ function initStarfield() {
 
 
 // ── MAP (Leaflet + OpenStreetMap) ────────────────────────────
-let leafletMap = null;
-let mapMarkers = [];
+var leafletMap = null;
+var mapMarkers = [];
 
 function renderMap() {
-  const mapContainer = document.getElementById('map-container');
-  const emptyMap = document.getElementById('empty-map');
-  const eventsEl = document.getElementById('events-container');
-  const emptyMsg = document.getElementById('empty-message');
-  const emptyMine = document.getElementById('empty-mine');
+  var mapContainer = document.getElementById('map-container');
+  var emptyMap = document.getElementById('empty-map');
+  var eventsEl = document.getElementById('events-container');
+  var emptyMsg = document.getElementById('empty-message');
+  var emptyMine = document.getElementById('empty-mine');
   if (eventsEl) eventsEl.style.display = 'none';
   if (emptyMsg) emptyMsg.style.display = 'none';
   if (emptyMine) emptyMine.style.display = 'none';
 
-  const savedEvents = allEvents.filter(e => savedEventIds.has(e.id) && e.latitude && e.longitude);
+  var savedEvents = allEvents.filter(function(e) { return savedEventIds.has(e.id) && e.latitude && e.longitude; });
   if (savedEvents.length === 0) {
     if (mapContainer) mapContainer.style.display = 'none';
     if (emptyMap) emptyMap.style.display = 'block';
@@ -763,41 +766,41 @@ function renderMap() {
   if (!leafletMap) {
     leafletMap = L.map('map').setView([30.2672, -97.7431], 14);
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      attribution: '© OpenStreetMap', maxZoom: 19
+      attribution: '\u00a9 OpenStreetMap', maxZoom: 19
     }).addTo(leafletMap);
   }
-  mapMarkers.forEach(m => leafletMap.removeLayer(m));
+  mapMarkers.forEach(function(m) { leafletMap.removeLayer(m); });
   mapMarkers = [];
 
-  const colors = ['#59be79','#50afe8','#f97c3c','#a855f7','#001e1e'];
-  const bounds = [];
+  var colors = ['#59be79','#50afe8','#f97c3c','#a855f7','#001e1e'];
+  var bounds = [];
   savedEvents.forEach(function(event, i) {
-    const color = colors[i % colors.length];
-    const icon = L.divIcon({
+    var color = colors[i % colors.length];
+    var icon = L.divIcon({
       className: 'map-pin',
-      html: '<div style="background:'+color+';width:12px;height:12px;border-radius:50%;border:2px solid #fff;box-shadow:0 2px 6px rgba(0,0,0,0.3);"></div>',
-      iconSize: [16,16], iconAnchor: [8,8]
+      html: '<div style="background:'+color+';width:14px;height:14px;border-radius:50%;border:2.5px solid #fff;box-shadow:0 2px 8px rgba(0,0,0,0.35);"></div>',
+      iconSize: [18,18], iconAnchor: [9,9]
     });
-    const rsvpLink = event.rsvpLink || event.link || '';
-    const dirs = 'https://maps.google.com/maps?daddr='+event.latitude+','+event.longitude;
-    const popup = '<div style="font-family:Aptos,sans-serif;max-width:220px;">'
-      + '<strong style="font-size:13px;">'+escHtml(event.name)+'</strong><br>'
-      + '<span style="font-size:11px;color:#5a7272;">'+escHtml(event.date)+' · '+escHtml(event.time)+'</span><br>'
-      + '<span style="font-size:11px;color:#5a7272;">📍 '+escHtml(event.location)+'</span><br>'
-      + (event.freeDrinks ? '<span style="font-size:10px;">🍹 free drinks</span> ' : '')
-      + (event.freeFood ? '<span style="font-size:10px;">🍽 free food</span> ' : '')
-      + (event.staffPick ? '<span style="font-size:10px;">✦ staff pick</span>' : '')
-      + '<div style="margin-top:6px;display:flex;gap:6px;">'
-      + (rsvpLink ? '<a href="'+escHtml(rsvpLink)+'" target="_blank" style="font-size:11px;color:#50afe8;">rsvp ↗</a>' : '')
-      + '<a href="'+dirs+'" target="_blank" style="font-size:11px;color:#f97c3c;">directions ↗</a>'
+    var rsvpLink = event.rsvpLink || event.link || '';
+    var dirs = 'https://maps.google.com/maps?daddr='+event.latitude+','+event.longitude;
+    var popup = '<div style="font-family:Aptos,sans-serif;max-width:240px;line-height:1.5;">'
+      + '<strong style="font-size:14px;color:#001e1e;">'+escHtml(event.name)+'</strong><br>'
+      + '<span style="font-size:11px;color:#5a7272;">'+escHtml(event.date)+' \u00b7 '+escHtml(event.time)+'</span><br>'
+      + '<span style="font-size:11px;color:#5a7272;">\ud83d\udccd '+escHtml(event.location)+'</span><br>'
+      + (event.freeDrinks ? '<span style="font-size:10px;">\ud83c\udf79 free drinks</span> ' : '')
+      + (event.freeFood ? '<span style="font-size:10px;">\ud83c\udf7d free food</span> ' : '')
+      + (event.staffPick ? '<span style="font-size:10px;">\u2726 staff pick</span>' : '')
+      + '<div style="margin-top:8px;display:flex;gap:8px;">'
+      + (rsvpLink ? '<a href="'+escHtml(rsvpLink)+'" target="_blank" style="font-size:12px;color:#59be79;font-weight:600;">tap in \u2197</a>' : '')
+      + '<a href="'+dirs+'" target="_blank" style="font-size:12px;color:#f97c3c;font-weight:600;">directions \u2197</a>'
       + '</div></div>';
-    const marker = L.marker([event.latitude, event.longitude], {icon: icon}).bindPopup(popup).addTo(leafletMap);
+    var marker = L.marker([event.latitude, event.longitude], {icon: icon}).bindPopup(popup).addTo(leafletMap);
     mapMarkers.push(marker);
     bounds.push([event.latitude, event.longitude]);
   });
-  if (bounds.length > 1) leafletMap.fitBounds(bounds, {padding:[30,30]});
+  if (bounds.length > 1) leafletMap.fitBounds(bounds, {padding:[40,40]});
   else if (bounds.length === 1) leafletMap.setView(bounds[0], 15);
-  setTimeout(function(){ leafletMap.invalidateSize(); }, 100);
+  setTimeout(function(){ leafletMap.invalidateSize(); }, 150);
 }
 
 // ── INIT ─────────────────────────────────────────────────────
@@ -811,4 +814,14 @@ document.addEventListener('DOMContentLoaded', () => {
   bindSearch();
   bindExports();
   fetchEvents();
+  // Scroll-to-top Bao Bao widget
+  var baoBtn = document.getElementById('scroll-top-bao');
+  if (baoBtn) {
+    window.addEventListener('scroll', function() {
+      baoBtn.style.display = window.scrollY > 400 ? 'flex' : 'none';
+    });
+    baoBtn.addEventListener('click', function() {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    });
+  }
 });
