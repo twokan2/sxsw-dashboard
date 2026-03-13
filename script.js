@@ -8,7 +8,7 @@
 //   - Vibe filters auto-hide vibes with no upcoming events
 //   - Stats bar "locked in" count updates live
 
-const SHEET_URL = 'https://docs.google.com/spreadsheets/d/1xeEYRm302zYQOxs1Mu_hEcnf_XQLeSxJ2-w-uXIgV2A/export?format=csv';
+const SHEET_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSv3oL0bKQ-hPaU3bU9gbNGRU5-dGH8oZENG_Wwevxi3QTHmLgMEU7SFB-PsTXa7gczFqAtXkDFHN-K/pub?output=csv';
 const STORAGE_KEY = 'knight-errant-rsvp';
 const SXSW_START = new Date('2026-03-12');
 const SX_COLORS = ['green', 'blue', 'orange', 'gray', 'dark'];
@@ -364,4 +364,131 @@ function updateMyEventsCount() {
     const badge = document.getElementById('myEventsCount');
     if (!badge) return;
     const n = getTracked().size;
-    b
+    badge.textContent = n > 0 ? n : '';
+}
+
+// === .ICS CALENDAR EXPORT ===
+function formatICS(dateStr, timeStr) {
+    if (!dateStr) return null;
+    const parts = dateStr.split('/');
+    if (parts.length < 3) return null;
+    const month = parts[0].padStart(2, '0');
+    const day = parts[1].padStart(2, '0');
+    const year = parts[2];
+    let h = 9, m = 0;
+    if (timeStr && timeStr !== 'TBD') {
+        const match = timeStr.match(/(\d+):(\d+)\s*(AM|PM)/i);
+        if (match) {
+            h = parseInt(match[1]); m = parseInt(match[2]);
+            const ap = match[3].toUpperCase();
+            if (ap === 'PM' && h !== 12) h += 12;
+            if (ap === 'AM' && h === 12) h = 0;
+        }
+    }
+    return `${year}${month}${day}T${String(h).padStart(2,'0')}${String(m).padStart(2,'0')}00`;
+}
+
+function downloadICS(ev) {
+    const dtStart = formatICS(ev.date, ev.time);
+    if (!dtStart) return;
+    const endH = String(parseInt(dtStart.substring(9, 11)) + 2).padStart(2, '0');
+    const dtEnd = dtStart.substring(0, 9) + endH + dtStart.substring(11);
+    const uid = `errant-atx-${encodeURIComponent(ev.name)}-${ev.date}@sxsw2026`;
+    const loc = (ev.location || '').replace(/,/g, '\\,');
+    const summary = (ev.name || '').replace(/,/g, '\\,');
+    const url = ev.joinLink || ev.link || '';
+    const ics = [
+        'BEGIN:VCALENDAR', 'VERSION:2.0',
+        'PRODID:-//The Errant ATX//SXSW 2026//EN',
+        'BEGIN:VEVENT',
+        `UID:${uid}`,
+        `SUMMARY:${summary}`,
+        `DTSTART:${dtStart}`,
+        `DTEND:${dtEnd}`,
+        `LOCATION:${loc}`,
+        url ? `URL:${url}` : '',
+        'END:VEVENT', 'END:VCALENDAR'
+    ].filter(Boolean).join('\r\n');
+    const blob = new Blob([ics], { type: 'text/calendar;charset=utf-8' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = `${(ev.name || 'event').replace(/[^a-z0-9]/gi, '-').toLowerCase()}.ics`;
+    document.body.appendChild(a); a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(a.href);
+}
+
+// === FILTERS ===
+function applyFilters(returnOnly = false) {
+    const s = document.getElementById('searchInput').value.toLowerCase().trim();
+    const d = activeDateFilter || document.getElementById('dateFilter').value;
+    let f = allEvents;
+    if (s) f = f.filter(e =>
+        e.name.toLowerCase().includes(s) || e.vibe.toLowerCase().includes(s) ||
+        e.location.toLowerCase().includes(s) || e.cost.toLowerCase().includes(s)
+    );
+    if (d) f = f.filter(e => e.date === d);
+    if (activeVibeFilter) f = f.filter(e => e.vibe.toLowerCase() === activeVibeFilter.toLowerCase());
+    if (returnOnly) return f;
+    renderEvents(f);
+}
+
+function clearAllFilters() {
+    document.getElementById('searchInput').value = '';
+    document.getElementById('dateFilter').value = '';
+    activeVibeFilter = null; activeDateFilter = null;
+    document.querySelectorAll('.vibe-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.date-chip').forEach(c => c.classList.remove('active'));
+    renderEvents(allEvents);
+}
+
+// === CONTROLS ===
+function bindControls() {
+    document.getElementById('searchInput').addEventListener('input', debounce(applyFilters, 200));
+    document.getElementById('dateFilter').addEventListener('change', () => {
+        activeDateFilter = document.getElementById('dateFilter').value || null;
+        document.querySelectorAll('.date-chip').forEach(c => c.classList.remove('active'));
+        applyFilters();
+    });
+    document.getElementById('clearFilters').addEventListener('click', clearAllFilters);
+    document.getElementById('viewAll').addEventListener('click', clearAllFilters);
+    document.getElementById('refreshBtn').addEventListener('click', () => {
+        allEvents = []; activeVibeFilter = null; activeDateFilter = null;
+        document.getElementById('searchInput').value = '';
+        document.getElementById('dateFilter').value = '';
+        loadEvents();
+    });
+    document.getElementById('exportExcel').addEventListener('click', exportXlsx);
+    document.getElementById('exportCSV').addEventListener('click', exportCsv);
+}
+
+// === EXPORT ===
+function fmt(e) {
+    return { Date: e.date, Time: e.time, 'Event Name': e.name, Location: e.location, Vibe: e.vibe, Cost: e.cost, Link: e.joinLink || e.link };
+}
+function exportXlsx() {
+    if (!allEvents.length) return;
+    const ws = XLSX.utils.json_to_sheet(allEvents.map(fmt));
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'SXSW 2026');
+    XLSX.writeFile(wb, 'the-errant-atx-sxsw-2026.xlsx');
+}
+function exportCsv() {
+    if (!allEvents.length) return;
+    const ws = XLSX.utils.json_to_sheet(allEvents.map(fmt));
+    const csv = XLSX.utils.sheet_to_csv(ws);
+    const b = new Blob([csv], { type: 'text/csv' });
+    const u = URL.createObjectURL(b);
+    const a = document.createElement('a');
+    a.href = u; a.download = 'the-errant-atx-sxsw-2026.csv';
+    a.click(); URL.revokeObjectURL(u);
+}
+
+// === UTIL ===
+function esc(s) {
+    if (!s) return '';
+    const d = document.createElement('div'); d.textContent = s; return d.innerHTML;
+}
+function debounce(fn, ms) {
+    let t; return (...a) => { clearTimeout(t); t = setTimeout(() => fn(...a), ms); };
+}
