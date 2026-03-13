@@ -541,54 +541,8 @@ a:hover { color: var(--sx-orange); }
 
 
 /* ============================
-   V9: Styles for JS-generated card structure
+   V9: Save button, badges, map
    ============================ */
-
-/* Override the V7 event-card to work with the flat JS structure */
-.event-card {
-    display: flex;
-    flex-direction: column;
-    background: #fff;
-    border: 1px solid var(--border);
-    border-radius: var(--radius-md);
-    padding: 18px 20px;
-    gap: 8px;
-    overflow: hidden;
-    transition: all 0.4s var(--ease-out);
-    animation: cardIn 0.5s var(--ease-out) both;
-    box-shadow: 0 1px 4px rgba(0,30,30,0.04);
-}
-.event-card:hover {
-    border-color: var(--border-hover);
-    transform: translateY(-3px);
-    box-shadow: 0 8px 28px rgba(0,30,30,0.08);
-}
-
-.card-top { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
-.card-meta { display: flex; gap: 10px; font-size: 0.72rem; color: var(--text-muted); font-weight: 500; }
-.card-date { font-weight: 600; color: var(--text-secondary); }
-.card-time { color: var(--text-light); }
-
-.card-vibe {
-    display: inline-flex; padding: 3px 12px;
-    border-radius: var(--radius-pill); font-size: 0.58rem; font-weight: 600;
-    letter-spacing: 0.1em; text-transform: uppercase; white-space: nowrap;
-    background: rgba(89,190,121,0.1); color: #3a9b58; border: 1px solid rgba(89,190,121,0.15);
-}
-
-/* Vibe color variants */
-[class*="vibe-tag-music"] { background: rgba(168,85,247,0.1) !important; color: #7c3aed !important; border-color: rgba(168,85,247,0.15) !important; }
-[class*="vibe-tag-party"] { background: rgba(249,124,60,0.1) !important; color: #d9621e !important; border-color: rgba(249,124,60,0.15) !important; }
-[class*="vibe-tag-tech"], [class*="vibe-tag-ai"], [class*="vibe-tag-startup"] { background: rgba(80,175,232,0.1) !important; color: #3090c8 !important; border-color: rgba(80,175,232,0.15) !important; }
-[class*="vibe-tag-food"], [class*="vibe-tag-coffee"] { background: rgba(249,124,60,0.1) !important; color: #d9621e !important; border-color: rgba(249,124,60,0.15) !important; }
-[class*="vibe-tag-culture"], [class*="vibe-tag-art"], [class*="vibe-tag-design"], [class*="vibe-tag-film"] { background: rgba(0,30,30,0.05) !important; color: var(--sx-dark) !important; border-color: rgba(0,30,30,0.1) !important; }
-[class*="vibe-tag-wellness"] { background: rgba(89,190,121,0.1) !important; color: #3a9b58 !important; border-color: rgba(89,190,121,0.15) !important; }
-[class*="vibe-tag-activation"], [class*="vibe-tag-experience"], [class*="vibe-tag-event"] { background: rgba(177,182,186,0.12) !important; color: #6a7278 !important; border-color: rgba(177,182,186,0.2) !important; }
-[class*="vibe-tag-networking"], [class*="vibe-tag-founders"], [class*="vibe-tag-media"], [class*="vibe-tag-panel"], [class*="vibe-tag-podcast"], [class*="vibe-tag-women"], [class*="vibe-tag-state"], [class*="vibe-tag-university"], [class*="vibe-tag-breakfast"] { background: rgba(80,175,232,0.08) !important; color: #2b7cb8 !important; border-color: rgba(80,175,232,0.12) !important; }
-[class*="vibe-tag-real-estate"] { background: rgba(80,175,232,0.1) !important; color: #3090c8 !important; border-color: rgba(80,175,232,0.15) !important; }
-
-.card-name { font-size: 1rem; font-weight: 600; line-height: 1.35; color: var(--text-primary); }
-.card-location { font-size: 0.76rem; color: var(--text-secondary); }
 
 .card-badges { display: flex; flex-wrap: wrap; gap: 5px; }
 .badge { display: inline-flex; align-items: center; gap: 3px; padding: 2px 8px; border-radius: var(--radius-pill); font-size: 0.55rem; font-weight: 600; }
@@ -596,19 +550,7 @@ a:hover { color: var(--sx-orange); }
 .free-drinks { background: rgba(168,85,247,0.1); color: #7c3aed; border: 1px solid rgba(168,85,247,0.15); }
 .free-food { background: rgba(249,124,60,0.1); color: #d9621e; border: 1px solid rgba(249,124,60,0.15); }
 
-.card-notes { font-size: 0.7rem; color: var(--text-light); font-style: italic; line-height: 1.4; }
-
-.card-actions { display: flex; align-items: center; gap: 8px; margin-top: 6px; }
-
-.rsvp-link {
-    display: inline-flex; align-items: center; padding: 9px 22px;
-    background: var(--sx-green); border-radius: var(--radius-sm);
-    color: #fff; font-family: 'Aptos', sans-serif; font-size: 0.72rem;
-    font-weight: 700; letter-spacing: 0.04em; text-decoration: none;
-    transition: all 0.3s var(--ease-out);
-}
-.rsvp-link:hover { background: #4aab6a; transform: translateY(-2px); box-shadow: 0 4px 16px rgba(89,190,121,0.25); color: #fff; }
-
+/* "it's a vibe" / "Locked In" save button */
 .save-btn {
     height: 38px; padding: 0 16px;
     display: flex; align-items: center; justify-content: center;
@@ -619,11 +561,14 @@ a:hover { color: var(--sx-orange); }
 }
 .save-btn:hover { border-color: var(--sx-orange); color: var(--sx-orange); }
 .save-btn.saved { background: rgba(249,124,60,0.08); border-color: var(--sx-orange); color: var(--sx-orange); font-weight: 600; }
-
-.event-past { opacity: 0.4; }
 .event-past .save-btn { display: none; }
 
-/* JS-generated filter buttons */
+/* Map */
+.map-legend-text { text-align: center; margin-top: 12px; font-size: 0.7rem; color: var(--text-light); }
+.map-pin { background: transparent !important; border: none !important; }
+#map-container { animation: fadeUp 0.5s var(--ease-out) both; }
+
+/* Filter buttons from JS */
 .filter-btn {
     padding: 6px 16px; background: transparent; border: 1px solid var(--border);
     border-radius: var(--radius-pill); color: var(--text-secondary);
@@ -633,11 +578,6 @@ a:hover { color: var(--sx-orange); }
 .filter-btn:hover { border-color: var(--sx-green); color: var(--sx-green); }
 .filter-btn.active { background: rgba(89,190,121,0.1); border-color: var(--sx-green); color: var(--sx-green); font-weight: 600; }
 .day-btn { flex-shrink: 0; }
-
-/* Map */
-.map-legend-text { text-align: center; margin-top: 12px; font-size: 0.7rem; color: var(--text-light); }
-.map-pin { background: transparent !important; border: none !important; }
-#map-container { animation: fadeUp 0.5s var(--ease-out) both; }
 
     </style>
 </head>
@@ -698,14 +638,8 @@ a:hover { color: var(--sx-orange); }
         </section>
 
         <div id="loading-msg" class="loading-state" style="display:none;"><div class="loader"></div><p>pulling up the vibes...</p></div>
-
         <main class="events-grid" id="events-container"></main>
-
-        <div id="map-container" style="display:none;">
-            <div id="map" style="height:500px;border-radius:14px;border:1px solid var(--border);"></div>
-            <p class="map-legend-text">showing your saved events · tap a pin for details</p>
-        </div>
-
+        <div id="map-container" style="display:none;"><div id="map" style="height:500px;border-radius:14px;border:1px solid var(--border);"></div><p class="map-legend-text">showing your saved events · tap a pin for details</p></div>
         <div id="error-msg" class="error-state" style="display:none;"><p class="state-emoji">⚡</p><p>Can't reach the sheet right now.</p><button class="btn-refresh" onclick="fetchEvents()">run it back</button></div>
         <div class="empty-state" id="empty-message" style="display:none;"><p class="state-emoji">🌙</p><p>nothing matches — try a different vibe</p></div>
         <div class="empty-state" id="empty-mine" style="display:none;"><p class="state-emoji">✦</p><p>nothing locked in yet</p><p class="empty-sub">tap "it's a vibe" on any event to save it here</p></div>
@@ -786,6 +720,7 @@ function toggleSave(eventId) {
     downloadICS(event);
   }
   updateMyEventsCount();
+  updateStatsBar();
 }
 
 function updateSaveButtons(eventId, saved) {
@@ -999,6 +934,27 @@ async function fetchEvents() {
   buildVibeFilters();
   renderCards();
   updateMyEventsCount();
+  updateStatsBar();
+}
+
+
+// ── STATS BAR ───────────────────────────────────────────────
+
+function updateStatsBar() {
+  const total = document.getElementById('totalEvents');
+  const free = document.getElementById('freeEvents');
+  const locked = document.getElementById('rsvpCount');
+  const days = document.getElementById('daysUntil');
+  
+  if (total) total.textContent = allEvents.length;
+  if (free) free.textContent = allEvents.filter(e => (e.cost||'').toLowerCase() === 'free' || e.freeDrinks || e.freeFood).length;
+  if (locked) locked.textContent = savedEventIds.size;
+  
+  if (days) {
+    const sxswStart = new Date('2026-03-12T00:00:00');
+    const diff = Math.ceil((sxswStart - new Date()) / 864e5);
+    days.textContent = diff > 0 ? diff : diff === 0 ? '🔥' : '🔴';
+  }
 }
 
 // ── FILTER LOGIC ─────────────────────────────────────────────
@@ -1064,7 +1020,7 @@ function renderCards() {
     return;
   }
 
-  container.innerHTML = events.map(event => buildCard(event)).join('');
+  container.innerHTML = events.map((event, i) => buildCard(event, i)).join('');
 
   // Wire up save buttons
   container.querySelectorAll('.save-btn').forEach(btn => {
@@ -1082,39 +1038,62 @@ function renderCards() {
   });
 }
 
-function buildCard(event) {
+function buildCard(event, index) {
   const past = isEventPast(event);
   const saved = savedEventIds.has(event.id);
-  const vibeClass = (event.vibe || 'experience').toLowerCase().replace(/[^a-z]/g, '-');
+  const SX_COLORS = ['green','blue','orange','gray','dark'];
+  const color = SX_COLORS[(index || 0) % SX_COLORS.length];
   const pastClass = past ? ' event-past' : '';
-  const staffBadge = event.staffPick ? '<span class="badge staff-pick">✦ staff pick</span>' : '';
-  const freeDrinkBadge = event.freeDrinks ? '<span class="badge free-drinks">🍹 free drinks</span>' : '';
-  const freeFoodBadge = event.freeFood ? '<span class="badge free-food">🍽 free food</span>' : '';
-  const rsvpLink = event.rsvpLink || event.link;
-  const rsvpBtn = rsvpLink
-    ? `<a class="rsvp-link" href="${escHtml(rsvpLink)}" target="_blank" rel="noopener">rsvp ↗</a>`
-    : '';
+
+  // Parse date for the date strip
+  let dayLabel = '', dateNum = '';
+  const dn = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+  if (event.date) {
+    let dt;
+    if (event.date.includes('-')) {
+      dt = new Date(event.date + 'T12:00:00');
+    } else if (event.date.includes('/')) {
+      const p = event.date.split('/');
+      dt = new Date(parseInt(p[2]), parseInt(p[0])-1, parseInt(p[1]), 12, 0, 0);
+    }
+    if (dt && !isNaN(dt)) {
+      dayLabel = dn[dt.getDay()];
+      dateNum = dt.getDate();
+    }
+  }
+
+  const cost = (event.cost || 'Free').toLowerCase() === 'free' ? 'Free ✦' : escHtml(event.cost);
+  const rsvpLink = event.rsvpLink || event.link || '';
+
+  // Badges
+  let badges = '';
+  if (event.freeDrinks) badges += '<span class="badge free-drinks">🍹 free drinks</span>';
+  if (event.freeFood) badges += '<span class="badge free-food">🍽 free food</span>';
+  if (event.staffPick) badges += '<span class="badge staff-pick">✦ staff pick</span>';
 
   return `
-    <div class="event-card vibe-${vibeClass}${pastClass}" data-id="${escHtml(event.id)}">
-      <div class="card-top">
-        <div class="card-meta">
-          <span class="card-date">${escHtml(event.date)}</span>
-          <span class="card-time">${escHtml(event.time)}</span>
+    <article class="event-card${pastClass}" data-color="${color}" data-id="${escHtml(event.id)}">
+      <div class="card-date-strip">
+        <span class="card-day">${escHtml(dayLabel)}</span>
+        <span class="card-date-num">${dateNum}</span>
+      </div>
+      <div class="card-body">
+        <div class="card-vibe-tag">${escHtml(event.vibe || 'Event')}</div>
+        <h3 class="card-title">${escHtml(event.name)}</h3>
+        ${badges ? '<div class="card-badges">' + badges + '</div>' : ''}
+        <div class="card-details">
+          <div class="card-detail"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg><span>${escHtml(event.time || 'TBD')}</span></div>
+          <div class="card-detail"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg><span>${escHtml(event.location || 'TBD')}</span></div>
+          <div class="card-detail"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg><span>${cost}</span></div>
         </div>
-        <span class="card-vibe vibe-tag-${vibeClass}">${escHtml(event.vibe)}</span>
+        <div class="card-actions">
+          ${rsvpLink ? '<a class="btn-tapin" href="' + escHtml(rsvpLink) + '" target="_blank" rel="noopener">tap in</a>' : ''}
+          <button class="save-btn${saved ? ' saved' : ''}" data-id="${escHtml(event.id)}">
+            ${saved ? 'Locked In' : "it's a vibe"}
+          </button>
+        </div>
       </div>
-      <div class="card-name">${escHtml(event.name)}</div>
-      <div class="card-location">${escHtml(event.location)}</div>
-      <div class="card-badges">${staffBadge}${freeDrinkBadge}${freeFoodBadge}</div>
-      ${event.notes ? `<div class="card-notes">${escHtml(event.notes)}</div>` : ''}
-      <div class="card-actions">
-        ${rsvpBtn}
-        <button class="save-btn${saved ? ' saved' : ''}" data-id="${escHtml(event.id)}">
-          ${saved ? 'Locked In' : "it's a vibe"}
-        </button>
-      </div>
-    </div>
+    </article>
   `;
 }
 
@@ -1443,7 +1422,7 @@ function renderMap() {
   if (!leafletMap) {
     leafletMap = L.map('map').setView([30.2672, -97.7431], 14);
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      attribution: '\u00a9 OpenStreetMap', maxZoom: 19
+      attribution: '© OpenStreetMap', maxZoom: 19
     }).addTo(leafletMap);
   }
   mapMarkers.forEach(m => leafletMap.removeLayer(m));
@@ -1451,7 +1430,7 @@ function renderMap() {
 
   const colors = ['#59be79','#50afe8','#f97c3c','#a855f7','#001e1e'];
   const bounds = [];
-  savedEvents.forEach((event, i) => {
+  savedEvents.forEach(function(event, i) {
     const color = colors[i % colors.length];
     const icon = L.divIcon({
       className: 'map-pin',
@@ -1462,16 +1441,16 @@ function renderMap() {
     const dirs = 'https://maps.google.com/maps?daddr='+event.latitude+','+event.longitude;
     const popup = '<div style="font-family:Aptos,sans-serif;max-width:220px;">'
       + '<strong style="font-size:13px;">'+escHtml(event.name)+'</strong><br>'
-      + '<span style="font-size:11px;color:#5a7272;">'+escHtml(event.date)+' \u00b7 '+escHtml(event.time)+'</span><br>'
-      + '<span style="font-size:11px;color:#5a7272;">\ud83d\udccd '+escHtml(event.location)+'</span><br>'
-      + (event.freeDrinks ? '<span style="font-size:10px;">\ud83c\udf79 free drinks</span> ' : '')
-      + (event.freeFood ? '<span style="font-size:10px;">\ud83c\udf7d free food</span> ' : '')
-      + (event.staffPick ? '<span style="font-size:10px;">\u2726 staff pick</span>' : '')
+      + '<span style="font-size:11px;color:#5a7272;">'+escHtml(event.date)+' · '+escHtml(event.time)+'</span><br>'
+      + '<span style="font-size:11px;color:#5a7272;">📍 '+escHtml(event.location)+'</span><br>'
+      + (event.freeDrinks ? '<span style="font-size:10px;">🍹 free drinks</span> ' : '')
+      + (event.freeFood ? '<span style="font-size:10px;">🍽 free food</span> ' : '')
+      + (event.staffPick ? '<span style="font-size:10px;">✦ staff pick</span>' : '')
       + '<div style="margin-top:6px;display:flex;gap:6px;">'
-      + (rsvpLink ? '<a href="'+escHtml(rsvpLink)+'" target="_blank" style="font-size:11px;color:#50afe8;">rsvp \u2197</a>' : '')
-      + '<a href="'+dirs+'" target="_blank" style="font-size:11px;color:#f97c3c;">directions \u2197</a>'
+      + (rsvpLink ? '<a href="'+escHtml(rsvpLink)+'" target="_blank" style="font-size:11px;color:#50afe8;">rsvp ↗</a>' : '')
+      + '<a href="'+dirs+'" target="_blank" style="font-size:11px;color:#f97c3c;">directions ↗</a>'
       + '</div></div>';
-    const marker = L.marker([event.latitude, event.longitude], {icon}).bindPopup(popup).addTo(leafletMap);
+    const marker = L.marker([event.latitude, event.longitude], {icon: icon}).bindPopup(popup).addTo(leafletMap);
     mapMarkers.push(marker);
     bounds.push([event.latitude, event.longitude]);
   });
