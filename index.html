@@ -9,14 +9,641 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Aptos:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <style>
+/* ============================
+   THE ERRANT — ATX · V7
+   SXSW 2026 · All Together Now
+   White bg + SXSW palette
+   ============================ */
+
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+:root {
+    /* SXSW Palette */
+    --sx-dark:   #001e1e;
+    --sx-green:  #59be79;
+    --sx-gray:   #6a7278;
+    --sx-blue:   #50afe8;
+    --sx-orange: #f97c3c;
+    --sx-purple: #a855f7;
+
+    /* Light theme surfaces */
+    --bg-page: #ffffff;
+    --bg-card: #ffffff;
+    --bg-card-hover: #fafbfc;
+    --border: #e0e4e8;
+    --border-hover: #c5cdd3;
+
+    /* Text */
+    --text-primary: var(--sx-dark);
+    --text-secondary: #2d4a4a;
+    --text-muted: #5a7272;
+    --text-light: #7a9494;
+
+    --radius-sm: 8px;
+    --radius-md: 14px;
+    --radius-pill: 100px;
+    --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+html { font-size: 16px; -webkit-font-smoothing: antialiased; scroll-behavior: smooth; }
+
+body {
+    font-family: 'Aptos', -apple-system, 'Segoe UI', sans-serif;
+    font-weight: 400;
+    background: var(--bg-page);
+    color: var(--text-primary);
+    min-height: 100vh;
+    overflow-x: hidden;
+    line-height: 1.6;
+}
+
+a { color: var(--sx-blue); text-decoration: none; transition: color 0.2s; }
+a:hover { color: var(--sx-orange); }
+
+/* --- Starfield (hidden on light) --- */
+#starfield { display: none; }
+
+/* --- Page Wrapper --- */
+.page-wrapper { position: relative; max-width: 1200px; margin: 0 auto; padding: 40px 20px 60px; }
+
+/* --- Header --- */
+.site-header { text-align: center; margin-bottom: 48px; animation: fadeUp 0.8s var(--ease-out) both; }
+
+.header-accent {
+    height: 3px;
+    max-width: 500px;
+    margin: 0 auto;
+    border-radius: 2px;
+    background: linear-gradient(90deg, var(--sx-green), var(--sx-blue), var(--sx-orange));
+}
+
+.header-content { padding: 32px 0; }
+
+.header-pre {
+    font-size: 0.65rem;
+    font-weight: 600;
+    letter-spacing: 0.4em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    margin-bottom: 12px;
+}
+
+.site-title {
+    font-family: 'Aptos', -apple-system, 'Segoe UI', sans-serif;
+    font-weight: 700;
+    font-size: clamp(2.2rem, 7vw, 4rem);
+    line-height: 1.1;
+    color: var(--sx-dark);
+    letter-spacing: -0.02em;
+    padding: 0 10px;
+}
+
+.site-subtitle {
+    margin-top: 14px;
+    font-size: 0.72rem;
+    font-weight: 500;
+    letter-spacing: 0.3em;
+    text-transform: lowercase;
+    color: var(--text-muted);
+}
+
+/* All Together Now tagline */
+.header-tagline {
+    margin-top: 20px;
+    font-size: 0.58rem;
+    font-weight: 700;
+    letter-spacing: 0.5em;
+    text-transform: uppercase;
+    color: var(--sx-orange);
+    display: inline-block;
+}
+.header-tagline::before,
+.header-tagline::after {
+    content: '—';
+    margin: 0 10px;
+    opacity: 0.3;
+    color: var(--sx-gray);
+}
+
+/* --- Music Toggle --- */
+.music-toggle {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    margin-top: 22px;
+    padding: 7px 18px;
+    background: var(--bg-card);
+    border: 1px solid rgba(168,85,247,0.3);
+    border-radius: var(--radius-pill);
+    color: var(--sx-purple);
+    font-family: 'Aptos', sans-serif;
+    font-size: 0.6rem;
+    font-weight: 500;
+    letter-spacing: 0.12em;
+    text-transform: lowercase;
+    cursor: pointer;
+    transition: all 0.3s var(--ease-out);
+}
+.music-toggle:hover { border-color: var(--sx-purple); color: var(--sx-purple); }
+.music-toggle.playing { border-color: var(--sx-purple); color: var(--sx-purple); background: rgba(168,85,247,0.08); }
+.music-toggle svg { flex-shrink: 0; }
+
+.music-toggle.playing::after {
+    content: '';
+    display: inline-block;
+    width: 14px; height: 10px; margin-left: 4px;
+    background:
+        linear-gradient(var(--sx-purple), var(--sx-purple)) 0 100% / 2px 40% no-repeat,
+        linear-gradient(var(--sx-purple), var(--sx-purple)) 4px 100% / 2px 70% no-repeat,
+        linear-gradient(var(--sx-purple), var(--sx-purple)) 8px 100% / 2px 50% no-repeat,
+        linear-gradient(var(--sx-purple), var(--sx-purple)) 12px 100% / 2px 90% no-repeat;
+    animation: eq 0.8s ease-in-out infinite alternate;
+}
+@keyframes eq {
+    0%   { background-size: 2px 40%, 2px 70%, 2px 50%, 2px 90%; }
+    25%  { background-size: 2px 80%, 2px 30%, 2px 90%, 2px 50%; }
+    50%  { background-size: 2px 50%, 2px 90%, 2px 30%, 2px 70%; }
+    75%  { background-size: 2px 90%, 2px 50%, 2px 70%, 2px 30%; }
+    100% { background-size: 2px 30%, 2px 80%, 2px 60%, 2px 80%; }
+}
+
+/* --- Controls --- */
+.controls { margin-bottom: 24px; animation: fadeUp 0.8s var(--ease-out) 0.1s both; }
+.controls-row { display: flex; gap: 10px; margin-bottom: 12px; flex-wrap: wrap; }
+
+.search-wrapper { flex: 1; position: relative; min-width: 180px; }
+.search-icon { position: absolute; left: 14px; top: 50%; transform: translateY(-50%); color: var(--text-light); pointer-events: none; }
+
+#searchInput {
+    width: 100%;
+    padding: 11px 14px 11px 40px;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    color: var(--text-primary);
+    font-family: 'Aptos', sans-serif;
+    font-size: 0.82rem;
+    transition: border-color 0.3s, box-shadow 0.3s;
+    outline: none;
+}
+#searchInput:focus { border-color: var(--sx-blue); box-shadow: 0 0 0 3px rgba(80,175,232,0.12); }
+#searchInput::placeholder { color: var(--text-light); }
+
+#dateFilter {
+    padding: 11px 14px;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    color: var(--text-primary);
+    font-family: 'Aptos', sans-serif;
+    font-size: 0.82rem;
+    outline: none;
+    cursor: pointer;
+    min-width: 140px;
+    transition: border-color 0.3s;
+}
+#dateFilter:focus { border-color: var(--sx-blue); }
+
+/* Load the Lineup button — uses SXSW orange */
+.btn-refresh {
+    padding: 10px 24px;
+    background: var(--sx-orange);
+    border: none;
+    border-radius: var(--radius-pill);
+    color: #fff;
+    font-family: 'Aptos', sans-serif;
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    cursor: pointer;
+    transition: all 0.3s var(--ease-out);
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    white-space: nowrap;
+    box-shadow: 0 2px 12px rgba(249,124,60,0.2);
+}
+.btn-refresh:hover {
+    background: #e86a28;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 20px rgba(249,124,60,0.3);
+}
+.btn-refresh svg { stroke: #fff; }
+
+.controls-actions { display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 10px; }
+.vibe-filters { display: flex; flex-wrap: wrap; gap: 6px; }
+
+.vibe-btn {
+    padding: 6px 16px;
+    background: transparent;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-pill);
+    color: var(--text-secondary);
+    font-family: 'Aptos', sans-serif;
+    font-size: 0.7rem;
+    font-weight: 500;
+    letter-spacing: 0.04em;
+    text-transform: lowercase;
+    cursor: pointer;
+    transition: all 0.3s var(--ease-out);
+    white-space: nowrap;
+}
+.vibe-btn:hover { border-color: var(--sx-blue); color: var(--text-secondary); }
+.vibe-btn.active { background: rgba(80,175,232,0.1); border-color: var(--sx-blue); color: var(--sx-blue); }
+
+.action-btns { display: flex; gap: 8px; flex-shrink: 0; }
+
+.btn-ghost {
+    padding: 6px 16px;
+    background: transparent;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    color: var(--text-muted);
+    font-family: 'Aptos', sans-serif;
+    font-size: 0.7rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.25s;
+}
+.btn-ghost:hover { border-color: var(--text-secondary); color: var(--text-secondary); }
+
+/* --- Stats Bar --- */
+.stats-bar {
+    display: flex; justify-content: center; align-items: center; gap: 24px;
+    padding: 20px 0; margin-bottom: 20px;
+    background: var(--bg-page);
+    border-radius: var(--radius-md);
+    border: 1px solid var(--border);
+    animation: fadeUp 0.8s var(--ease-out) 0.15s both;
+}
+.stat { display: flex; flex-direction: column; align-items: center; gap: 3px; }
+.stat-num { font-family: 'Aptos', sans-serif; font-size: 1.8rem; font-weight: 700; color: var(--sx-dark); line-height: 1; }
+.stat-label { font-size: 0.6rem; font-weight: 600; letter-spacing: 0.18em; text-transform: uppercase; color: var(--text-muted); }
+.stat-divider { color: var(--sx-orange); font-size: 0.6rem; opacity: 0.4; }
+
+/* --- Date Navigation --- */
+.date-nav {
+    display: flex; gap: 6px; overflow-x: auto; padding: 0 0 16px; margin-bottom: 24px;
+    scrollbar-width: none; animation: fadeUp 0.8s var(--ease-out) 0.2s both;
+}
+.date-nav::-webkit-scrollbar { display: none; }
+
+.date-chip {
+    flex-shrink: 0; padding: 8px 18px;
+    background: var(--bg-card); border: 1px solid var(--border);
+    border-radius: var(--radius-pill); color: var(--text-muted);
+    font-family: 'Aptos', sans-serif; font-size: 0.7rem; font-weight: 500;
+    cursor: pointer; transition: all 0.3s var(--ease-out);
+    display: flex; align-items: center; gap: 7px; white-space: nowrap;
+}
+.date-chip:hover { border-color: var(--sx-green); color: var(--text-secondary); }
+.date-chip.active { background: rgba(89,190,121,0.1); border-color: var(--sx-green); color: var(--sx-green); font-weight: 600; }
+.date-chip-count { font-size: 0.6rem; opacity: 0.5; }
+
+/* --- Events Grid --- */
+.events-grid { display: grid; grid-template-columns: 1fr; gap: 14px; min-height: 200px; }
+
+/* --- Event Card --- */
+.event-card {
+    display: flex;
+    background: #fff;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    overflow: hidden;
+    transition: all 0.4s var(--ease-out);
+    animation: cardIn 0.5s var(--ease-out) both;
+    box-shadow: 0 1px 4px rgba(0,30,30,0.04);
+}
+.event-card:hover {
+    border-color: var(--border-hover);
+    transform: translateY(-3px);
+    box-shadow: 0 8px 28px rgba(0,30,30,0.08);
+}
+
+/* Color-coded left strip — cycles through SXSW colors */
+.card-date-strip {
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    padding: 16px 14px;
+    border-right: 1px solid var(--border);
+    min-width: 58px; gap: 2px;
+}
+
+/* Cycle colors by card index (set via JS) */
+.event-card[data-color="green"] .card-date-strip  { background: rgba(89,190,121,0.08); }
+.event-card[data-color="blue"] .card-date-strip   { background: rgba(80,175,232,0.08); }
+.event-card[data-color="orange"] .card-date-strip  { background: rgba(249,124,60,0.08); }
+.event-card[data-color="gray"] .card-date-strip    { background: rgba(177,182,186,0.1); }
+.event-card[data-color="dark"] .card-date-strip    { background: rgba(0,30,30,0.04); }
+
+.event-card[data-color="green"] .card-date-num  { color: var(--sx-green); }
+.event-card[data-color="blue"] .card-date-num   { color: var(--sx-blue); }
+.event-card[data-color="orange"] .card-date-num  { color: var(--sx-orange); }
+.event-card[data-color="gray"] .card-date-num    { color: var(--sx-gray); }
+.event-card[data-color="dark"] .card-date-num    { color: var(--sx-dark); }
+
+.card-day { font-size: 0.58rem; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase; color: var(--text-muted); }
+.card-date-num { font-family: 'Aptos', sans-serif; font-size: 1.5rem; font-weight: 700; color: var(--sx-dark); line-height: 1; }
+
+.card-body { flex: 1; padding: 16px 18px; display: flex; flex-direction: column; gap: 10px; }
+
+/* Vibe tags cycle SXSW colors too */
+.card-vibe-tag {
+    display: inline-flex; align-self: flex-start; padding: 3px 12px;
+    border-radius: var(--radius-pill);
+    font-size: 0.58rem; font-weight: 600;
+    letter-spacing: 0.1em; text-transform: uppercase;
+}
+.event-card[data-color="green"] .card-vibe-tag  { background: rgba(89,190,121,0.1); color: #3a9b58; border: 1px solid rgba(89,190,121,0.15); }
+.event-card[data-color="blue"] .card-vibe-tag   { background: rgba(80,175,232,0.1); color: #3090c8; border: 1px solid rgba(80,175,232,0.15); }
+.event-card[data-color="orange"] .card-vibe-tag  { background: rgba(249,124,60,0.1); color: #d9621e; border: 1px solid rgba(249,124,60,0.15); }
+.event-card[data-color="gray"] .card-vibe-tag    { background: rgba(177,182,186,0.12); color: #6a7278; border: 1px solid rgba(177,182,186,0.2); }
+.event-card[data-color="dark"] .card-vibe-tag    { background: rgba(0,30,30,0.05); color: var(--sx-dark); border: 1px solid rgba(0,30,30,0.1); }
+
+.card-title { font-size: 1rem; font-weight: 600; line-height: 1.35; color: var(--text-primary); }
+
+.card-details { display: flex; flex-direction: column; gap: 5px; }
+.card-detail { display: flex; align-items: flex-start; gap: 8px; font-size: 0.76rem; color: var(--text-secondary); line-height: 1.4; }
+.card-detail svg { flex-shrink: 0; margin-top: 2px; color: var(--text-light); }
+
+.card-actions { display: flex; align-items: center; gap: 8px; margin-top: 6px; }
+
+/* Tap In — green CTA */
+.btn-tapin {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 9px 22px;
+    background: var(--sx-green);
+    border: none; border-radius: var(--radius-sm);
+    color: #fff;
+    font-family: 'Aptos', sans-serif;
+    font-size: 0.72rem; font-weight: 700; letter-spacing: 0.04em;
+    text-transform: lowercase; cursor: pointer;
+    transition: all 0.3s var(--ease-out); text-decoration: none;
+}
+.btn-tapin:hover { background: #4aab6a; transform: translateY(-2px); box-shadow: 0 4px 16px rgba(89,190,121,0.25); color: #fff; }
+
+/* That's a bet — blue outline on hover/lock */
+.btn-bet {
+    height: 38px; padding: 0 14px;
+    display: flex; align-items: center; justify-content: center; gap: 5px;
+    background: transparent; border: 1px solid var(--border);
+    border-radius: var(--radius-sm); color: var(--text-light);
+    font-family: 'Aptos', sans-serif; font-size: 0.64rem; font-weight: 500;
+    cursor: pointer; transition: all 0.3s var(--ease-out); flex-shrink: 0; white-space: nowrap;
+}
+.btn-bet:hover { border-color: var(--sx-blue); color: var(--sx-blue); }
+.btn-bet.locked { background: rgba(80,175,232,0.08); border-color: var(--sx-blue); color: var(--sx-blue); font-weight: 600; }
+.btn-bet.locked svg { fill: var(--sx-blue); }
+.btn-bet-label { display: none; }
+@media (min-width: 420px) { .btn-bet-label { display: inline; } }
+
+/* --- States --- */
+.loading-state {
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    gap: 16px; padding: 80px 0; color: var(--text-muted); font-size: 0.82rem; grid-column: 1/-1;
+}
+.loader {
+    width: 24px; height: 24px;
+    border: 2px solid var(--border);
+    border-top-color: var(--sx-blue);
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+.error-state, .empty-state { text-align: center; padding: 80px 20px; color: var(--text-secondary); }
+.state-emoji { font-size: 2.5rem; margin-bottom: 14px; }
+.error-msg { margin-bottom: 24px; font-size: 0.88rem; }
+.empty-state { color: var(--text-muted); font-size: 0.88rem; }
+.empty-state .btn-ghost { margin-top: 18px; }
+
+/* --- Footer --- */
+.site-footer {
+    margin-top: 64px; padding-top: 24px;
+    border-top: 3px solid transparent;
+    border-image: linear-gradient(90deg, var(--sx-green), var(--sx-blue), var(--sx-orange)) 1;
+    display: flex; justify-content: space-between; align-items: flex-end; flex-wrap: wrap; gap: 16px;
+    animation: fadeUp 0.8s var(--ease-out) 0.3s both;
+}
+.footer-actions { display: flex; gap: 8px; }
+.btn-export {
+    display: inline-flex; align-items: center; gap: 5px;
+    padding: 7px 14px; background: transparent;
+    border: 1px solid var(--border); border-radius: var(--radius-sm);
+    color: var(--text-muted); font-family: 'Aptos', sans-serif;
+    font-size: 0.64rem; font-weight: 500; letter-spacing: 0.08em;
+    text-transform: uppercase; cursor: pointer; transition: all 0.25s;
+}
+.btn-export:hover { border-color: var(--text-secondary); color: var(--text-secondary); }
+.footer-meta { text-align: right; font-size: 0.65rem; color: var(--text-muted); }
+.footer-sub { margin-top: 3px; opacity: 0.5; }
+.footer-sub a { color: var(--text-muted); border-bottom: 1px solid var(--border); }
+.footer-sub a:hover { color: var(--sx-blue); border-color: var(--sx-blue); }
+
+/* --- Animations --- */
+@keyframes fadeUp { from { opacity: 0; transform: translateY(18px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes cardIn { from { opacity: 0; transform: translateY(14px) scale(0.98); } to { opacity: 1; transform: translateY(0) scale(1); } }
+
+/* --- Responsive --- */
+@media (min-width: 640px) {
+    .page-wrapper { padding: 56px 32px 80px; }
+    .events-grid { grid-template-columns: repeat(2, 1fr); }
+    .stats-bar { gap: 36px; }
+}
+@media (min-width: 1024px) {
+    .events-grid { grid-template-columns: repeat(3, 1fr); }
+    .page-wrapper { padding: 68px 40px 100px; }
+}
+
+::-webkit-scrollbar { width: 5px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: rgba(0,30,30,0.08); border-radius: 3px; }
+::selection { background: rgba(80,175,232,0.15); color: var(--sx-dark); }
+
+/* ============================
+   V8 ADDITIONS
+   Tabs, save button, empty states
+   ============================ */
+
+/* --- Tab Nav --- */
+.tab-nav {
+    display: flex;
+    gap: 6px;
+    margin-bottom: 24px;
+    animation: fadeUp 0.8s var(--ease-out) 0.05s both;
+}
+.tab-btn {
+    position: relative;
+    padding: 8px 20px;
+    background: transparent;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-pill);
+    color: var(--text-muted);
+    font-family: 'Aptos', sans-serif;
+    font-size: 0.72rem;
+    font-weight: 500;
+    letter-spacing: 0.04em;
+    cursor: pointer;
+    transition: all 0.3s var(--ease-out);
+    white-space: nowrap;
+}
+.tab-btn:hover {
+    border-color: var(--sx-green);
+    color: var(--text-secondary);
+}
+.tab-btn.active {
+    background: var(--sx-green);
+    border-color: var(--sx-green);
+    color: #fff;
+    font-weight: 600;
+}
+
+/* Badge showing saved count on My Events tab */
+.tab-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 1.15rem;
+    height: 1.15rem;
+    padding: 0 3px;
+    background: var(--sx-orange);
+    color: #fff;
+    border-radius: 100px;
+    font-size: 0.6rem;
+    font-weight: 700;
+    margin-left: 5px;
+    vertical-align: middle;
+    line-height: 1;
+    transition: all 0.2s;
+}
+.tab-badge:empty { display: none; }
+
+/* --- "take me thru dere" button (replaces "that's a bet") --- */
+/* Inherits .btn-bet styles, just renamed in JS */
+/* Widen slightly to fit new label on larger screens */
+@media (min-width: 420px) {
+    .btn-bet { min-width: 160px; }
+}
+
+/* --- Past event dimming --- */
+.event-past {
+    opacity: 0.4;
+}
+.event-past .btn-bet { display: none; }
+
+/* --- My Events empty state sub-text --- */
+.empty-sub {
+    margin-top: 6px;
+    font-size: 0.78rem;
+    color: var(--text-light);
+}
+
+
+/* ============================
+   V9: Styles for JS-generated card structure
+   ============================ */
+
+/* Override the V7 event-card to work with the flat JS structure */
+.event-card {
+    display: flex;
+    flex-direction: column;
+    background: #fff;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    padding: 18px 20px;
+    gap: 8px;
+    overflow: hidden;
+    transition: all 0.4s var(--ease-out);
+    animation: cardIn 0.5s var(--ease-out) both;
+    box-shadow: 0 1px 4px rgba(0,30,30,0.04);
+}
+.event-card:hover {
+    border-color: var(--border-hover);
+    transform: translateY(-3px);
+    box-shadow: 0 8px 28px rgba(0,30,30,0.08);
+}
+
+.card-top { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+.card-meta { display: flex; gap: 10px; font-size: 0.72rem; color: var(--text-muted); font-weight: 500; }
+.card-date { font-weight: 600; color: var(--text-secondary); }
+.card-time { color: var(--text-light); }
+
+.card-vibe {
+    display: inline-flex; padding: 3px 12px;
+    border-radius: var(--radius-pill); font-size: 0.58rem; font-weight: 600;
+    letter-spacing: 0.1em; text-transform: uppercase; white-space: nowrap;
+    background: rgba(89,190,121,0.1); color: #3a9b58; border: 1px solid rgba(89,190,121,0.15);
+}
+
+/* Vibe color variants */
+[class*="vibe-tag-music"] { background: rgba(168,85,247,0.1) !important; color: #7c3aed !important; border-color: rgba(168,85,247,0.15) !important; }
+[class*="vibe-tag-party"] { background: rgba(249,124,60,0.1) !important; color: #d9621e !important; border-color: rgba(249,124,60,0.15) !important; }
+[class*="vibe-tag-tech"], [class*="vibe-tag-ai"], [class*="vibe-tag-startup"] { background: rgba(80,175,232,0.1) !important; color: #3090c8 !important; border-color: rgba(80,175,232,0.15) !important; }
+[class*="vibe-tag-food"], [class*="vibe-tag-coffee"] { background: rgba(249,124,60,0.1) !important; color: #d9621e !important; border-color: rgba(249,124,60,0.15) !important; }
+[class*="vibe-tag-culture"], [class*="vibe-tag-art"], [class*="vibe-tag-design"], [class*="vibe-tag-film"] { background: rgba(0,30,30,0.05) !important; color: var(--sx-dark) !important; border-color: rgba(0,30,30,0.1) !important; }
+[class*="vibe-tag-wellness"] { background: rgba(89,190,121,0.1) !important; color: #3a9b58 !important; border-color: rgba(89,190,121,0.15) !important; }
+[class*="vibe-tag-activation"], [class*="vibe-tag-experience"], [class*="vibe-tag-event"] { background: rgba(177,182,186,0.12) !important; color: #6a7278 !important; border-color: rgba(177,182,186,0.2) !important; }
+[class*="vibe-tag-networking"], [class*="vibe-tag-founders"], [class*="vibe-tag-media"], [class*="vibe-tag-panel"], [class*="vibe-tag-podcast"], [class*="vibe-tag-women"], [class*="vibe-tag-state"], [class*="vibe-tag-university"], [class*="vibe-tag-breakfast"] { background: rgba(80,175,232,0.08) !important; color: #2b7cb8 !important; border-color: rgba(80,175,232,0.12) !important; }
+[class*="vibe-tag-real-estate"] { background: rgba(80,175,232,0.1) !important; color: #3090c8 !important; border-color: rgba(80,175,232,0.15) !important; }
+
+.card-name { font-size: 1rem; font-weight: 600; line-height: 1.35; color: var(--text-primary); }
+.card-location { font-size: 0.76rem; color: var(--text-secondary); }
+
+.card-badges { display: flex; flex-wrap: wrap; gap: 5px; }
+.badge { display: inline-flex; align-items: center; gap: 3px; padding: 2px 8px; border-radius: var(--radius-pill); font-size: 0.55rem; font-weight: 600; }
+.staff-pick { background: rgba(80,175,232,0.1); color: #2b7cb8; border: 1px solid rgba(80,175,232,0.15); }
+.free-drinks { background: rgba(168,85,247,0.1); color: #7c3aed; border: 1px solid rgba(168,85,247,0.15); }
+.free-food { background: rgba(249,124,60,0.1); color: #d9621e; border: 1px solid rgba(249,124,60,0.15); }
+
+.card-notes { font-size: 0.7rem; color: var(--text-light); font-style: italic; line-height: 1.4; }
+
+.card-actions { display: flex; align-items: center; gap: 8px; margin-top: 6px; }
+
+.rsvp-link {
+    display: inline-flex; align-items: center; padding: 9px 22px;
+    background: var(--sx-green); border-radius: var(--radius-sm);
+    color: #fff; font-family: 'Aptos', sans-serif; font-size: 0.72rem;
+    font-weight: 700; letter-spacing: 0.04em; text-decoration: none;
+    transition: all 0.3s var(--ease-out);
+}
+.rsvp-link:hover { background: #4aab6a; transform: translateY(-2px); box-shadow: 0 4px 16px rgba(89,190,121,0.25); color: #fff; }
+
+.save-btn {
+    height: 38px; padding: 0 16px;
+    display: flex; align-items: center; justify-content: center;
+    background: transparent; border: 1px solid var(--border);
+    border-radius: var(--radius-sm); color: var(--text-light);
+    font-family: 'Aptos', sans-serif; font-size: 0.68rem; font-weight: 500;
+    cursor: pointer; transition: all 0.3s var(--ease-out); white-space: nowrap;
+}
+.save-btn:hover { border-color: var(--sx-orange); color: var(--sx-orange); }
+.save-btn.saved { background: rgba(249,124,60,0.08); border-color: var(--sx-orange); color: var(--sx-orange); font-weight: 600; }
+
+.event-past { opacity: 0.4; }
+.event-past .save-btn { display: none; }
+
+/* JS-generated filter buttons */
+.filter-btn {
+    padding: 6px 16px; background: transparent; border: 1px solid var(--border);
+    border-radius: var(--radius-pill); color: var(--text-secondary);
+    font-family: 'Aptos', sans-serif; font-size: 0.65rem; font-weight: 500;
+    text-transform: lowercase; cursor: pointer; transition: all 0.3s var(--ease-out); white-space: nowrap;
+}
+.filter-btn:hover { border-color: var(--sx-green); color: var(--sx-green); }
+.filter-btn.active { background: rgba(89,190,121,0.1); border-color: var(--sx-green); color: var(--sx-green); font-weight: 600; }
+.day-btn { flex-shrink: 0; }
+
+/* Map */
+.map-legend-text { text-align: center; margin-top: 12px; font-size: 0.7rem; color: var(--text-light); }
+.map-pin { background: transparent !important; border: none !important; }
+#map-container { animation: fadeUp 0.5s var(--ease-out) both; }
+
+    </style>
 </head>
 <body>
     <canvas id="starfield"></canvas>
-
-    <audio id="bgMusic" loop preload="none">
-        <source src="vibe.mp3" type="audio/mpeg">
-    </audio>
+    <audio id="bgMusic" loop preload="none"><source src="vibe.mp3" type="audio/mpeg"></audio>
 
     <div class="page-wrapper">
         <header class="site-header">
@@ -24,19 +651,9 @@
             <div class="header-content">
                 <p class="header-pre">sxsw 2026 · march 12–18 · austin tx</p>
                 <h1 class="site-title">The Errant — ATX</h1>
-                <p class="site-subtitle">take me thru there</p>
+                <p class="site-subtitle">take me thru dere</p>
                 <p class="header-tagline">all together now</p>
-
-                <button class="music-toggle" id="musicToggle" title="Play / Pause vibes" aria-label="Toggle background music">
-                    <svg class="music-icon-off" id="musicIconOff" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-                        <path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/>
-                        <line x1="3" y1="3" x2="21" y2="21" stroke-width="2" stroke-linecap="round"/>
-                    </svg>
-                    <svg class="music-icon-on" id="musicIconOn" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="display:none">
-                        <path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/>
-                    </svg>
-                    <span class="music-label" id="musicLabel">play vibes</span>
-                </button>
+                <button class="music-toggle" id="music-toggle" title="Play / Pause vibes">▶ play vibes</button>
             </div>
             <div class="header-accent"></div>
         </header>
@@ -44,34 +661,33 @@
         <nav class="tab-nav">
             <button class="tab-btn active" data-tab="all">all events</button>
             <button class="tab-btn" data-tab="upnext">up next</button>
-            <button class="tab-btn" data-tab="mine">
-                my events
-                <span class="tab-badge" id="myEventsCount"></span>
-            </button>
+            <button class="tab-btn" data-tab="mine">my events <span class="tab-badge" id="my-events-count"></span></button>
+            <button class="tab-btn" data-tab="map">my map</button>
         </nav>
 
-        <section class="controls" id="filterSection">
+        <section class="controls" id="filter-bar">
             <div class="controls-row">
                 <div class="search-wrapper">
                     <svg class="search-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
-                    <input type="text" id="searchInput" placeholder="search vibes, venues, events..." autocomplete="off">
+                    <input type="text" id="search-input" placeholder="search vibes, venues, events..." autocomplete="off">
                 </div>
-                <input type="date" id="dateFilter" title="Filter by date">
-                <button id="refreshBtn" class="btn-refresh" title="Refresh events">
+                <button class="btn-refresh" onclick="fetchEvents()">
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.3M22 12.5a10 10 0 0 1-18.8 4.2"/></svg>
                     load the lineup
                 </button>
             </div>
             <div class="controls-row controls-actions">
-                <div class="vibe-filters" id="vibeFilters"></div>
+                <div class="vibe-filters" id="vibe-filters"></div>
                 <div class="action-btns">
-                    <button id="clearFilters" class="btn-ghost">wipe it</button>
-                    <button id="viewAll" class="btn-ghost">show all</button>
+                    <button id="btn-free" class="btn-ghost">free only</button>
+                    <button id="btn-locked" class="btn-ghost">locked in</button>
+                    <button id="btn-wipe" class="btn-ghost">wipe it</button>
                 </div>
             </div>
+            <div class="date-nav" id="day-filters"></div>
         </section>
 
-        <section class="stats-bar">
+        <section class="stats-bar" id="stats-bar">
             <div class="stat"><span class="stat-num" id="totalEvents">—</span><span class="stat-label">events</span></div>
             <div class="stat-divider">✦</div>
             <div class="stat"><span class="stat-num" id="freeEvents">—</span><span class="stat-label">free</span></div>
@@ -81,46 +697,802 @@
             <div class="stat"><span class="stat-num" id="daysUntil">—</span><span class="stat-label">days out</span></div>
         </section>
 
-        <nav class="date-nav" id="dateNav"></nav>
+        <div id="loading-msg" class="loading-state" style="display:none;"><div class="loader"></div><p>pulling up the vibes...</p></div>
 
-        <main class="events-grid" id="eventsGrid">
-            <div class="loading-state" id="loadingState">
-                <div class="loader"></div>
-                <p>pulling up the vibes...</p>
-            </div>
-        </main>
+        <main class="events-grid" id="events-container"></main>
 
-        <div class="error-state" id="errorState" style="display:none;">
-            <p class="state-emoji">⚡</p>
-            <p class="error-msg" id="errorMsg">Can't reach the sheet right now.</p>
-            <button class="btn-refresh" onclick="loadEvents()">run it back</button>
+        <div id="map-container" style="display:none;">
+            <div id="map" style="height:500px;border-radius:14px;border:1px solid var(--border);"></div>
+            <p class="map-legend-text">showing your saved events · tap a pin for details</p>
         </div>
 
-        <div class="empty-state" id="emptyState" style="display:none;">
-            <p class="state-emoji">🌙</p>
-            <p>nothing matches — try a different vibe</p>
-            <button class="btn-ghost" onclick="clearAllFilters()">wipe it</button>
-        </div>
-
-        <div class="empty-state" id="emptyStateMine" style="display:none;">
-            <p class="state-emoji">✦</p>
-            <p>nothing locked in yet</p>
-            <p class="empty-sub">tap "take me thru dere" on any event to save it here</p>
-        </div>
+        <div id="error-msg" class="error-state" style="display:none;"><p class="state-emoji">⚡</p><p>Can't reach the sheet right now.</p><button class="btn-refresh" onclick="fetchEvents()">run it back</button></div>
+        <div class="empty-state" id="empty-message" style="display:none;"><p class="state-emoji">🌙</p><p>nothing matches — try a different vibe</p></div>
+        <div class="empty-state" id="empty-mine" style="display:none;"><p class="state-emoji">✦</p><p>nothing locked in yet</p><p class="empty-sub">tap "it's a vibe" on any event to save it here</p></div>
+        <div class="empty-state" id="empty-map" style="display:none;"><p class="state-emoji">🗺</p><p>no events on your map yet</p><p class="empty-sub">save events with "it's a vibe" and they'll appear here</p></div>
 
         <footer class="site-footer">
             <div class="footer-actions">
-                <button class="btn-export" id="exportExcel"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg> xlsx</button>
-                <button class="btn-export" id="exportCSV"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg> csv</button>
+                <button class="btn-export" id="btn-export-xlsx"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg> xlsx</button>
+                <button class="btn-export" id="btn-export-csv"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg> csv</button>
             </div>
-            <div class="footer-meta">
-                <p>the errant — atx · all together now · sxsw 2026</p>
-                <p class="footer-sub">events via <a href="https://rsvpatx.com/" target="_blank" rel="noopener">rsvpatx.com</a></p>
-            </div>
+            <div class="footer-meta"><p>the errant — atx · all together now · sxsw 2026</p></div>
         </footer>
     </div>
 
     <script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
-    <script src="script.js"></script>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script>
+// ============================================================
+// THE ERRANT — ATX · script.js · V8
+// New in V8:
+//   - "take me thru dere" saves events to localStorage (no account)
+//   - "Up Next" tab: events from now forward, sorted by time
+//   - "My Events" tab: saved events as a personal schedule
+//   - Calendar export (.ics) on save
+//   - Day filter buttons auto-hide past days
+//   - Filters auto-hide when no events remain for that category
+//   - vibe.mp3 = Metro Boomin "Take Me Thru Dere"
+// ============================================================
+
+const SHEET_ID = '1xeEYRm302zYQOxs1Mu_hEcnf_XQLeSxJ2-w-uXIgV2A';
+const CSV_URL = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/export?format=csv`;
+const STORAGE_KEY = 'errant_atx_saved_events';
+
+let allEvents = [];
+let savedEventIds = new Set();
+let currentTab = 'all'; // 'all' | 'upnext' | 'mine'
+let activeFilters = {
+  vibe: null,
+  day: null,
+  free: false,
+  lockedIn: false
+};
+
+// ── SAVED EVENTS (localStorage) ─────────────────────────────
+
+function loadSavedIds() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (raw) {
+      const arr = JSON.parse(raw);
+      savedEventIds = new Set(arr);
+    }
+  } catch (e) {
+    savedEventIds = new Set();
+  }
+}
+
+function persistSavedIds() {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify([...savedEventIds]));
+  } catch (e) {}
+}
+
+function toggleSave(eventId) {
+  const event = allEvents.find(e => e.id === eventId);
+  if (!event) return;
+
+  if (savedEventIds.has(eventId)) {
+    savedEventIds.delete(eventId);
+    persistSavedIds();
+    updateSaveButtons(eventId, false);
+    if (currentTab === 'mine') renderCards();
+  } else {
+    savedEventIds.add(eventId);
+    persistSavedIds();
+    updateSaveButtons(eventId, true);
+    // Offer .ics calendar download
+    downloadICS(event);
+  }
+  updateMyEventsCount();
+}
+
+function updateSaveButtons(eventId, saved) {
+  document.querySelectorAll(`.save-btn[data-id="${eventId}"]`).forEach(btn => {
+    btn.textContent = saved ? 'Locked In' : "it's a vibe";
+    btn.classList.toggle('saved', saved);
+  });
+}
+
+function updateMyEventsCount() {
+  const badge = document.getElementById('my-events-count');
+  if (badge) badge.textContent = savedEventIds.size > 0 ? savedEventIds.size : '';
+}
+
+// ── CALENDAR (.ICS) EXPORT ───────────────────────────────────
+
+function formatICSDate(dateStr, timeStr) {
+  // dateStr: "M/D/YYYY" or "YYYY-MM-DD"
+  // timeStr: "H:MM AM – H:MM PM" — we only need start
+  if (!dateStr) return null;
+  let year, month, day;
+  if (dateStr.includes('-')) {
+    [year, month, day] = dateStr.split('-');
+  } else {
+    const parts = dateStr.split('/');
+    month = parts[0].padStart(2, '0');
+    day = parts[1].padStart(2, '0');
+    year = parts[2];
+  }
+  let hours = '09', mins = '00';
+  if (timeStr) {
+    const match = timeStr.match(/(\d+):(\d+)\s*(AM|PM)/i);
+    if (match) {
+      let h = parseInt(match[1]);
+      const m = match[2];
+      const ampm = match[3].toUpperCase();
+      if (ampm === 'PM' && h !== 12) h += 12;
+      if (ampm === 'AM' && h === 12) h = 0;
+      hours = String(h).padStart(2, '0');
+      mins = m;
+    }
+  }
+  return `${year}${month}${day}T${hours}${mins}00`;
+}
+
+function downloadICS(event) {
+  const dtStart = formatICSDate(event.date, event.time);
+  if (!dtStart) return;
+  // End = 2hrs after start by default
+  const endHour = String(parseInt(dtStart.substring(9, 11)) + 2).padStart(2, '0');
+  const dtEnd = dtStart.substring(0, 9) + endHour + dtStart.substring(11);
+  const uid = `errant-atx-${event.id || Date.now()}@sxsw2026`;
+  const loc = (event.location || '').replace(/,/g, '\\,');
+  const summary = (event.name || '').replace(/,/g, '\\,');
+  const url = event.rsvpLink || event.link || '';
+
+  const ics = [
+    'BEGIN:VCALENDAR',
+    'VERSION:2.0',
+    'PRODID:-//The Errant ATX//SXSW 2026//EN',
+    'BEGIN:VEVENT',
+    `UID:${uid}`,
+    `SUMMARY:${summary}`,
+    `DTSTART:${dtStart}`,
+    `DTEND:${dtEnd}`,
+    `LOCATION:${loc}`,
+    `URL:${url}`,
+    'END:VEVENT',
+    'END:VCALENDAR'
+  ].join('\r\n');
+
+  const blob = new Blob([ics], { type: 'text/calendar;charset=utf-8' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `${(event.name || 'event').replace(/[^a-z0-9]/gi, '-').toLowerCase()}.ics`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(a.href);
+}
+
+// ── DATE/TIME HELPERS ────────────────────────────────────────
+
+function parseEventDateTime(event) {
+  // Returns a Date object or null
+  const dateStr = event.date; // "M/D/YYYY"
+  const timeStr = event.time; // "H:MM AM – H:MM PM"
+  if (!dateStr) return null;
+  let year, month, day;
+  if (dateStr.includes('-')) {
+    [year, month, day] = dateStr.split('-').map(Number);
+  } else {
+    const parts = dateStr.split('/');
+    month = parseInt(parts[0]);
+    day = parseInt(parts[1]);
+    year = parseInt(parts[2]);
+  }
+  let hours = 9, mins = 0;
+  if (timeStr) {
+    const match = timeStr.match(/(\d+):(\d+)\s*(AM|PM)/i);
+    if (match) {
+      let h = parseInt(match[1]);
+      const m = parseInt(match[2]);
+      const ampm = match[3].toUpperCase();
+      if (ampm === 'PM' && h !== 12) h += 12;
+      if (ampm === 'AM' && h === 12) h = 0;
+      hours = h; mins = m;
+    }
+  }
+  return new Date(year, month - 1, day, hours, mins);
+}
+
+function isEventPast(event) {
+  const dt = parseEventDateTime(event);
+  if (!dt) return false;
+  return dt < new Date();
+}
+
+function isEventUpcoming(event) {
+  return !isEventPast(event);
+}
+
+// Returns "3/14/2026" → Date at midnight
+function parseDayDate(dateStr) {
+  if (!dateStr) return null;
+  const parts = dateStr.split('/');
+  if (parts.length === 3) {
+    return new Date(parseInt(parts[2]), parseInt(parts[0]) - 1, parseInt(parts[1]));
+  }
+  return null;
+}
+
+function getTodayMidnight() {
+  const d = new Date();
+  d.setHours(0, 0, 0, 0);
+  return d;
+}
+
+// ── CSV PARSING ──────────────────────────────────────────────
+
+function parseCSV(text) {
+  const lines = text.trim().split('\n');
+  const headers = parseCSVLine(lines[0]);
+  return lines.slice(1).map(line => {
+    const vals = parseCSVLine(line);
+    const obj = {};
+    headers.forEach((h, i) => { obj[h.trim()] = (vals[i] || '').trim(); });
+    return obj;
+  }).filter(r => r['Event Name'] || r['event name'] || r['name']);
+}
+
+function parseCSVLine(line) {
+  const result = [];
+  let current = '';
+  let inQuotes = false;
+  for (let i = 0; i < line.length; i++) {
+    const c = line[i];
+    if (c === '"') {
+      if (inQuotes && line[i + 1] === '"') { current += '"'; i++; }
+      else inQuotes = !inQuotes;
+    } else if (c === ',' && !inQuotes) {
+      result.push(current);
+      current = '';
+    } else {
+      current += c;
+    }
+  }
+  result.push(current);
+  return result;
+}
+
+function normalizeEvent(row) {
+  // Handles both Blueprint-style and RSVPATX-style columns
+  return {
+    id: row['id'] || row['ID'] || Math.random().toString(36).slice(2),
+    date: row['Date'] || row['date'] || '',
+    time: row['Time'] || row['time'] || '',
+    name: row['Event Name'] || row['name'] || row['Name'] || '',
+    link: row['Event Link'] || row['link'] || row['Link'] || '',
+    location: row['Event Location'] || row['venue'] || row['Location'] || '',
+    vibe: row['Vibe'] || row['vibe'] || 'Experience',
+    rsvpLink: row['Link to Join'] || row['rsvpLink'] || row['Event Link'] || row['link'] || '',
+    cost: row['Cost'] || row['cost'] || 'Free',
+    freeFood: (row['Free Food'] || '').toLowerCase() === 'yes',
+    freeDrinks: (row['Free Drinks'] || '').toLowerCase() === 'yes',
+    staffPick: (row['Staff Pick'] || '').toLowerCase() === 'yes',
+    notes: row['Notes'] || row['notes'] || '',
+    latitude: parseFloat(row['Latitude'] || row['latitude'] || 0) || 0,
+    longitude: parseFloat(row['Longitude'] || row['longitude'] || 0) || 0
+  };
+}
+
+// ── FETCH DATA ───────────────────────────────────────────────
+
+async function fetchEvents() {
+  showLoading(true);
+  try {
+    const res = await fetch(CSV_URL + '&t=' + Date.now());
+    if (!res.ok) throw new Error('Sheet fetch failed');
+    const text = await res.text();
+    const rows = parseCSV(text);
+    allEvents = rows.map(normalizeEvent).filter(e => e.name);
+    showError(false);
+  } catch (err) {
+    console.error(err);
+    showError(true);
+    allEvents = [];
+  }
+  showLoading(false);
+  buildDayFilters();
+  buildVibeFilters();
+  renderCards();
+  updateMyEventsCount();
+}
+
+// ── FILTER LOGIC ─────────────────────────────────────────────
+
+function getFilteredEvents() {
+  let events = [...allEvents];
+
+  if (currentTab === 'upnext') {
+    events = events.filter(isEventUpcoming);
+    events.sort((a, b) => {
+      const da = parseEventDateTime(a);
+      const db = parseEventDateTime(b);
+      if (!da && !db) return 0;
+      if (!da) return 1;
+      if (!db) return -1;
+      return da - db;
+    });
+    return events; // Up Next ignores other filters — show everything upcoming
+  }
+
+  if (currentTab === 'mine') {
+    events = events.filter(e => savedEventIds.has(e.id));
+    events.sort((a, b) => {
+      const da = parseEventDateTime(a);
+      const db = parseEventDateTime(b);
+      if (!da && !db) return 0;
+      if (!da) return 1;
+      if (!db) return -1;
+      return da - db;
+    });
+    return events;
+  }
+
+  // "All" tab with filters
+  if (activeFilters.vibe) events = events.filter(e => e.vibe === activeFilters.vibe);
+  if (activeFilters.day) events = events.filter(e => e.date === activeFilters.day);
+  if (activeFilters.free) events = events.filter(e => e.cost === 'Free' || e.freeDrinks || e.freeFood);
+  if (activeFilters.lockedIn) events = events.filter(e => savedEventIds.has(e.id));
+
+  return events;
+}
+
+// ── RENDER CARDS ─────────────────────────────────────────────
+
+function renderCards() {
+  const container = document.getElementById('events-container');
+  if (!container) return;
+
+  const events = getFilteredEvents();
+  const emptyMsg = document.getElementById('empty-message');
+  const emptyMine = document.getElementById('empty-mine');
+
+  if (emptyMsg) emptyMsg.style.display = 'none';
+  if (emptyMine) emptyMine.style.display = 'none';
+
+  if (events.length === 0) {
+    container.innerHTML = '';
+    if (currentTab === 'mine') {
+      if (emptyMine) emptyMine.style.display = 'flex';
+    } else {
+      if (emptyMsg) emptyMsg.style.display = 'flex';
+    }
+    return;
+  }
+
+  container.innerHTML = events.map(event => buildCard(event)).join('');
+
+  // Wire up save buttons
+  container.querySelectorAll('.save-btn').forEach(btn => {
+    const id = btn.dataset.id;
+    if (savedEventIds.has(id)) {
+      btn.textContent = 'Locked In';
+      btn.classList.add('saved');
+    }
+    btn.addEventListener('click', () => toggleSave(id));
+  });
+
+  // Wire up RSVP links
+  container.querySelectorAll('.rsvp-link').forEach(a => {
+    a.addEventListener('click', e => e.stopPropagation());
+  });
+}
+
+function buildCard(event) {
+  const past = isEventPast(event);
+  const saved = savedEventIds.has(event.id);
+  const vibeClass = (event.vibe || 'experience').toLowerCase().replace(/[^a-z]/g, '-');
+  const pastClass = past ? ' event-past' : '';
+  const staffBadge = event.staffPick ? '<span class="badge staff-pick">✦ staff pick</span>' : '';
+  const freeDrinkBadge = event.freeDrinks ? '<span class="badge free-drinks">🍹 free drinks</span>' : '';
+  const freeFoodBadge = event.freeFood ? '<span class="badge free-food">🍽 free food</span>' : '';
+  const rsvpLink = event.rsvpLink || event.link;
+  const rsvpBtn = rsvpLink
+    ? `<a class="rsvp-link" href="${escHtml(rsvpLink)}" target="_blank" rel="noopener">rsvp ↗</a>`
+    : '';
+
+  return `
+    <div class="event-card vibe-${vibeClass}${pastClass}" data-id="${escHtml(event.id)}">
+      <div class="card-top">
+        <div class="card-meta">
+          <span class="card-date">${escHtml(event.date)}</span>
+          <span class="card-time">${escHtml(event.time)}</span>
+        </div>
+        <span class="card-vibe vibe-tag-${vibeClass}">${escHtml(event.vibe)}</span>
+      </div>
+      <div class="card-name">${escHtml(event.name)}</div>
+      <div class="card-location">${escHtml(event.location)}</div>
+      <div class="card-badges">${staffBadge}${freeDrinkBadge}${freeFoodBadge}</div>
+      ${event.notes ? `<div class="card-notes">${escHtml(event.notes)}</div>` : ''}
+      <div class="card-actions">
+        ${rsvpBtn}
+        <button class="save-btn${saved ? ' saved' : ''}" data-id="${escHtml(event.id)}">
+          ${saved ? 'Locked In' : "it's a vibe"}
+        </button>
+      </div>
+    </div>
+  `;
+}
+
+function escHtml(str) {
+  if (!str && str !== 0) return '';
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+}
+
+// ── TAB LOGIC ────────────────────────────────────────────────
+
+function switchTab(tab) {
+  currentTab = tab;
+  document.querySelectorAll('.tab-btn').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.tab === tab);
+  });
+  const filterBar = document.getElementById('filter-bar');
+  if (filterBar) filterBar.style.display = (tab === 'all') ? '' : 'none';
+  const statsBar = document.getElementById('stats-bar');
+  if (statsBar) statsBar.style.display = (tab === 'map') ? 'none' : '';
+  const mapEl = document.getElementById('map-container');
+  const eventsEl = document.getElementById('events-container');
+  const emptyMap = document.getElementById('empty-map');
+  if (mapEl) mapEl.style.display = (tab === 'map') ? '' : 'none';
+  if (eventsEl) eventsEl.style.display = (tab === 'map') ? 'none' : '';
+  if (emptyMap) emptyMap.style.display = 'none';
+  if (tab === 'map') { renderMap(); } else { renderCards(); }
+}
+
+// ── DAY FILTER BUTTONS ───────────────────────────────────────
+
+function buildDayFilters() {
+  const container = document.getElementById('day-filters');
+  if (!container) return;
+
+  const today = getTodayMidnight();
+
+  // Collect unique days from events
+  const days = [...new Set(allEvents.map(e => e.date).filter(Boolean))];
+  days.sort((a, b) => {
+    const da = parseDayDate(a);
+    const db = parseDayDate(b);
+    return da - db;
+  });
+
+  // Filter out past days
+  const futureDays = days.filter(d => {
+    const dt = parseDayDate(d);
+    return dt && dt >= today;
+  });
+
+  container.innerHTML = futureDays.map(day => {
+    const dt = parseDayDate(day);
+    const label = dt ? dt.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' }) : day;
+    return `<button class="filter-btn day-btn" data-day="${escHtml(day)}">${label}</button>`;
+  }).join('');
+
+  container.querySelectorAll('.day-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const day = btn.dataset.day;
+      if (activeFilters.day === day) {
+        activeFilters.day = null;
+        btn.classList.remove('active');
+      } else {
+        activeFilters.day = day;
+        container.querySelectorAll('.day-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+      }
+      renderCards();
+    });
+  });
+}
+
+// ── VIBE FILTER BUTTONS ──────────────────────────────────────
+
+function buildVibeFilters() {
+  const container = document.getElementById('vibe-filters');
+  if (!container) return;
+
+  // Only show vibes that have at least one upcoming event
+  const upcomingVibes = new Set(
+    allEvents.filter(isEventUpcoming).map(e => e.vibe).filter(Boolean)
+  );
+
+  // If all events are past, show all vibes anyway
+  const vibes = upcomingVibes.size > 0
+    ? [...upcomingVibes]
+    : [...new Set(allEvents.map(e => e.vibe).filter(Boolean))];
+
+  vibes.sort();
+
+  container.innerHTML = vibes.map(vibe => {
+    return `<button class="filter-btn vibe-btn" data-vibe="${escHtml(vibe)}">${escHtml(vibe)}</button>`;
+  }).join('');
+
+  container.querySelectorAll('.vibe-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const vibe = btn.dataset.vibe;
+      if (activeFilters.vibe === vibe) {
+        activeFilters.vibe = null;
+        btn.classList.remove('active');
+      } else {
+        activeFilters.vibe = vibe;
+        container.querySelectorAll('.vibe-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+      }
+      renderCards();
+    });
+  });
+}
+
+// ── FREE / LOCKED-IN TOGGLES ─────────────────────────────────
+
+function bindFilterToggles() {
+  const freeBtn = document.getElementById('btn-free');
+  const lockedBtn = document.getElementById('btn-locked');
+  const wipeBtn = document.getElementById('btn-wipe');
+
+  if (freeBtn) {
+    freeBtn.addEventListener('click', () => {
+      activeFilters.free = !activeFilters.free;
+      freeBtn.classList.toggle('active', activeFilters.free);
+      renderCards();
+    });
+  }
+  if (lockedBtn) {
+    lockedBtn.addEventListener('click', () => {
+      activeFilters.lockedIn = !activeFilters.lockedIn;
+      lockedBtn.classList.toggle('active', activeFilters.lockedIn);
+      renderCards();
+    });
+  }
+  if (wipeBtn) {
+    wipeBtn.addEventListener('click', () => {
+      activeFilters = { vibe: null, day: null, free: false, lockedIn: false };
+      document.querySelectorAll('.filter-btn, .day-btn').forEach(b => b.classList.remove('active'));
+      if (freeBtn) freeBtn.classList.remove('active');
+      if (lockedBtn) lockedBtn.classList.remove('active');
+      renderCards();
+    });
+  }
+}
+
+// ── SEARCH ───────────────────────────────────────────────────
+
+function bindSearch() {
+  const input = document.getElementById('search-input');
+  if (!input) return;
+  input.addEventListener('input', () => {
+    const q = input.value.toLowerCase().trim();
+    const cards = document.querySelectorAll('.event-card');
+    cards.forEach(card => {
+      const text = card.textContent.toLowerCase();
+      card.style.display = q === '' || text.includes(q) ? '' : 'none';
+    });
+  });
+}
+
+// ── MUSIC PLAYER ─────────────────────────────────────────────
+
+function initMusicPlayer() {
+  const playBtn = document.getElementById('music-toggle');
+  if (!playBtn) return;
+
+  let audio = null;
+
+  playBtn.addEventListener('click', () => {
+    if (!audio) {
+      audio = new Audio('vibe.mp3');
+      audio.loop = true;
+    }
+    if (audio.paused) {
+      audio.play().catch(() => {});
+      playBtn.classList.add('playing');
+      playBtn.textContent = '⏸ pause vibes';
+    } else {
+      audio.pause();
+      playBtn.classList.remove('playing');
+      playBtn.textContent = '▶ play vibes';
+    }
+  });
+}
+
+// ── UI HELPERS ───────────────────────────────────────────────
+
+function showLoading(on) {
+  const el = document.getElementById('loading-msg');
+  if (el) el.style.display = on ? 'block' : 'none';
+}
+
+function showError(on) {
+  const el = document.getElementById('error-msg');
+  if (el) el.style.display = on ? 'block' : 'none';
+}
+
+// ── TAB BINDINGS ─────────────────────────────────────────────
+
+function bindTabs() {
+  document.querySelectorAll('.tab-btn').forEach(btn => {
+    btn.addEventListener('click', () => switchTab(btn.dataset.tab));
+  });
+}
+
+// ── EXPORT BUTTONS (xlsx/csv) ────────────────────────────────
+
+function bindExports() {
+  const xlsxBtn = document.getElementById('btn-export-xlsx');
+  const csvBtn = document.getElementById('btn-export-csv');
+  if (xlsxBtn) xlsxBtn.addEventListener('click', exportXLSX);
+  if (csvBtn) csvBtn.addEventListener('click', exportCSV);
+}
+
+function exportCSV() {
+  const events = getFilteredEvents();
+  const headers = ['Date', 'Time', 'Event Name', 'Event Link', 'Location', 'Vibe', 'Cost', 'Free Food', 'Free Drinks', 'Staff Pick', 'Notes'];
+  const rows = events.map(e => [
+    e.date, e.time, e.name, e.rsvpLink, e.location, e.vibe, e.cost,
+    e.freeFood ? 'Yes' : 'No', e.freeDrinks ? 'Yes' : 'No',
+    e.staffPick ? 'Yes' : 'No', e.notes
+  ].map(v => `"${(v || '').replace(/"/g, '""')}"`).join(','));
+  const csv = [headers.join(','), ...rows].join('\n');
+  downloadBlob(csv, 'text/csv', 'sxsw-2026-errant.csv');
+}
+
+function exportXLSX() {
+  // Minimal XLSX via SheetJS CDN (must be loaded in index.html)
+  if (typeof XLSX === 'undefined') {
+    alert('XLSX export requires SheetJS library. Add to index.html: <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"><\/script>');
+    return;
+  }
+  const events = getFilteredEvents();
+  const ws_data = [
+    ['Date', 'Time', 'Event Name', 'Link', 'Location', 'Vibe', 'Cost', 'Free Food', 'Free Drinks', 'Staff Pick', 'Notes'],
+    ...events.map(e => [e.date, e.time, e.name, e.rsvpLink, e.location, e.vibe, e.cost,
+      e.freeFood ? 'Yes' : 'No', e.freeDrinks ? 'Yes' : 'No', e.staffPick ? 'Yes' : 'No', e.notes])
+  ];
+  const wb = XLSX.utils.book_new();
+  const ws = XLSX.utils.aoa_to_sheet(ws_data);
+  XLSX.utils.book_append_sheet(wb, ws, 'Events');
+  XLSX.writeFile(wb, 'sxsw-2026-errant.xlsx');
+}
+
+function downloadBlob(content, type, filename) {
+  const blob = new Blob([content], { type });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(a.href);
+}
+
+// ── STARFIELD (canvas bg) ────────────────────────────────────
+
+function initStarfield() {
+  const canvas = document.getElementById('starfield');
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  let stars = [];
+
+  function resize() {
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+  }
+
+  function makeStars(n) {
+    stars = [];
+    for (let i = 0; i < n; i++) {
+      stars.push({
+        x: Math.random() * canvas.width,
+        y: Math.random() * canvas.height,
+        r: Math.random() * 1.2 + 0.3,
+        a: Math.random(),
+        speed: Math.random() * 0.003 + 0.001
+      });
+    }
+  }
+
+  function draw() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    stars.forEach(s => {
+      s.a += s.speed;
+      const alpha = (Math.sin(s.a) + 1) / 2 * 0.6 + 0.1;
+      ctx.beginPath();
+      ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
+      ctx.fillStyle = `rgba(89, 190, 121, ${alpha})`;
+      ctx.fill();
+    });
+    requestAnimationFrame(draw);
+  }
+
+  resize();
+  makeStars(120);
+  draw();
+  window.addEventListener('resize', () => { resize(); makeStars(120); });
+}
+
+
+// ── MAP (Leaflet + OpenStreetMap) ────────────────────────────
+let leafletMap = null;
+let mapMarkers = [];
+
+function renderMap() {
+  const mapContainer = document.getElementById('map-container');
+  const emptyMap = document.getElementById('empty-map');
+  const eventsEl = document.getElementById('events-container');
+  const emptyMsg = document.getElementById('empty-message');
+  const emptyMine = document.getElementById('empty-mine');
+  if (eventsEl) eventsEl.style.display = 'none';
+  if (emptyMsg) emptyMsg.style.display = 'none';
+  if (emptyMine) emptyMine.style.display = 'none';
+
+  const savedEvents = allEvents.filter(e => savedEventIds.has(e.id) && e.latitude && e.longitude);
+  if (savedEvents.length === 0) {
+    if (mapContainer) mapContainer.style.display = 'none';
+    if (emptyMap) emptyMap.style.display = 'block';
+    return;
+  }
+  if (mapContainer) mapContainer.style.display = '';
+  if (emptyMap) emptyMap.style.display = 'none';
+
+  if (!leafletMap) {
+    leafletMap = L.map('map').setView([30.2672, -97.7431], 14);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '\u00a9 OpenStreetMap', maxZoom: 19
+    }).addTo(leafletMap);
+  }
+  mapMarkers.forEach(m => leafletMap.removeLayer(m));
+  mapMarkers = [];
+
+  const colors = ['#59be79','#50afe8','#f97c3c','#a855f7','#001e1e'];
+  const bounds = [];
+  savedEvents.forEach((event, i) => {
+    const color = colors[i % colors.length];
+    const icon = L.divIcon({
+      className: 'map-pin',
+      html: '<div style="background:'+color+';width:12px;height:12px;border-radius:50%;border:2px solid #fff;box-shadow:0 2px 6px rgba(0,0,0,0.3);"></div>',
+      iconSize: [16,16], iconAnchor: [8,8]
+    });
+    const rsvpLink = event.rsvpLink || event.link || '';
+    const dirs = 'https://maps.google.com/maps?daddr='+event.latitude+','+event.longitude;
+    const popup = '<div style="font-family:Aptos,sans-serif;max-width:220px;">'
+      + '<strong style="font-size:13px;">'+escHtml(event.name)+'</strong><br>'
+      + '<span style="font-size:11px;color:#5a7272;">'+escHtml(event.date)+' \u00b7 '+escHtml(event.time)+'</span><br>'
+      + '<span style="font-size:11px;color:#5a7272;">\ud83d\udccd '+escHtml(event.location)+'</span><br>'
+      + (event.freeDrinks ? '<span style="font-size:10px;">\ud83c\udf79 free drinks</span> ' : '')
+      + (event.freeFood ? '<span style="font-size:10px;">\ud83c\udf7d free food</span> ' : '')
+      + (event.staffPick ? '<span style="font-size:10px;">\u2726 staff pick</span>' : '')
+      + '<div style="margin-top:6px;display:flex;gap:6px;">'
+      + (rsvpLink ? '<a href="'+escHtml(rsvpLink)+'" target="_blank" style="font-size:11px;color:#50afe8;">rsvp \u2197</a>' : '')
+      + '<a href="'+dirs+'" target="_blank" style="font-size:11px;color:#f97c3c;">directions \u2197</a>'
+      + '</div></div>';
+    const marker = L.marker([event.latitude, event.longitude], {icon}).bindPopup(popup).addTo(leafletMap);
+    mapMarkers.push(marker);
+    bounds.push([event.latitude, event.longitude]);
+  });
+  if (bounds.length > 1) leafletMap.fitBounds(bounds, {padding:[30,30]});
+  else if (bounds.length === 1) leafletMap.setView(bounds[0], 15);
+  setTimeout(function(){ leafletMap.invalidateSize(); }, 100);
+}
+
+// ── INIT ─────────────────────────────────────────────────────
+
+document.addEventListener('DOMContentLoaded', () => {
+  loadSavedIds();
+  initStarfield();
+  initMusicPlayer();
+  bindTabs();
+  bindFilterToggles();
+  bindSearch();
+  bindExports();
+  fetchEvents();
+});
+
+    </script>
 </body>
 </html>
