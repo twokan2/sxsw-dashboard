@@ -524,7 +524,7 @@ function buildVibeFilters() {
   );
 
   // If all events are past, show all vibes anyway
-  const vibes = upcomingVibes.size > 0
+  let vibes = upcomingVibes.size > 0
     ? [...upcomingVibes]
     : [...new Set(allEvents.map(e => e.vibe).filter(Boolean))];
 
