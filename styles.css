@@ -609,3 +609,27 @@ a:hover { color: var(--sx-orange); }
     border-bottom-color: var(--sx-blue);
     opacity: 1;
 }
+
+
+/* ============================
+   POC Tab — Pan-African Flag Colors
+   Red #E03C31, Black #000000, Green #009B3A
+   ============================ */
+
+.tab-poc {
+    background: linear-gradient(180deg, #E03C31 33%, #000000 33%, #000000 66%, #009B3A 66%) !important;
+    color: #fff !important;
+    border-color: transparent !important;
+    font-weight: 600 !important;
+    letter-spacing: 0.08em;
+    text-shadow: 0 1px 2px rgba(0,0,0,0.3);
+}
+.tab-poc:hover {
+    opacity: 0.9;
+    transform: translateY(-1px);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+}
+.tab-poc.active {
+    box-shadow: 0 3px 12px rgba(224,60,49,0.3);
+    opacity: 1;
+}
