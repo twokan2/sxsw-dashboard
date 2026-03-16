@@ -14,6 +14,87 @@ const SHEET_ID = '1xeEYRm302zYQOxs1Mu_hEcnf_XQLeSxJ2-w-uXIgV2A';
 const CSV_URL = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/export?format=csv`;
 const STORAGE_KEY = 'errant_atx_saved_events';
 
+
+// ── POC EVENTS LIST ─────────────────────────────────────────
+const POC_EVENT_NAMES = [
+  // Hip-Hop & R&B
+  'bsf showcase', 'benny the butcher',
+  'hip-hop forever', 'hip hop forever',
+  'all the vibes', 'afro motion',
+  'sound lynk', 'stamped music',
+  'purrrszn', 'gas station fm',
+  'byxchella', 'new rhyme cinema',
+  'rnb forever', 'r&b forever', 'rnb block party', 'r&b block party',
+  'r&b showcase', 'rb showcase',
+  'official detroit showcase',
+  'peligrosa', 'cornbread mafia',
+  'electric sunset', 'convergence',
+  'digidecade', 'dj chose',
+  'we outside stage',
+  'dreamfest',
+  // TDE / Superhuman at Antone's
+  'superhuman', 'tde',
+  'quinn xcii',
+  // Latin / Caribbean / Afrobeats
+  'tropicasa', 'cafe con ron',
+  'musica no borders', 'fono',
+  'vinilious',
+  'casa vibras',
+  'latinx investor',
+  'bogota region', 'sao paulo house', 'sp house',
+  'afrobeats', 'night of afrobeats',
+  'afrobeats party',
+  // Culture & Community
+  'auntie', 'culture house',
+  'cool kids house', 'build together', 'build in tulsa',
+  'equitech', 'ayana rising',
+  'sunday sanctuary',
+  'big queer kickoff',
+  'cherries wheels',
+  'take action',
+  'howdy podner',
+  'starfire fest',
+  'slime fest',
+  // Film & Panels (Keke, Boots Riley, Serena, etc)
+  'i love boosters', 'keke palmer',
+  'forbidden fruits', 'gabrielle union',
+  'mexodus',
+  'serena williams',
+  'w. kamau bell', 'kamau bell',
+  // Music artists
+  'don toliver', 'junior h', 'bigxthaplug',
+  'chingy', 'ai profit machine',
+  'blk odyssy',
+  'shakey graves', 'good country',
+  'jazz re:freshed', 'jazz refreshed',
+  'puffco',
+  // KUTX SXSBreaks (Black Austin artists)
+  'sxsbreaks', 'kydd jones', 'j soulja', 'blakchyl', 'foolish ty',
+  'anastasia hera', 'louisv',
+  // British Music Embassy (diverse international)
+  'british music embassy',
+  // Billboard headliners
+  'billboard', 'don toliver',
+  // Cajun Eats (not confirmed for SXSW but flagged)
+  'cajun eats',
+  // Canje
+  'canje',
+  // Additional
+  'cure for paranoia',
+  'balanced breakfast',
+  'south x south larry',
+  'jack on the block',
+  'fela dot tv',
+];
+
+function isPOCEvent(event) {
+  var searchStr = ((event.name || '') + ' ' + (event.notes || '') + ' ' + (event.vibe || '')).toLowerCase();
+  for (var i = 0; i < POC_EVENT_NAMES.length; i++) {
+    if (searchStr.indexOf(POC_EVENT_NAMES[i]) !== -1) return true;
+  }
+  return false;
+}
+
 let allEvents = [];
 let savedEventIds = new Set();
 let currentTab = 'all'; // 'all' | 'upnext' | 'mine'
@@ -300,6 +381,19 @@ function updateStatsBar() {
 function getFilteredEvents() {
   let events = [...allEvents];
 
+  if (currentTab === 'poc') {
+    events = events.filter(isPOCEvent);
+    events.sort(function(a, b) {
+      var da = parseEventDateTime(a);
+      var db = parseEventDateTime(b);
+      if (!da && !db) return 0;
+      if (!da) return 1;
+      if (!db) return -1;
+      return da - db;
+    });
+    return events;
+  }
+
   if (currentTab === 'upnext') {
     events = events.filter(isEventUpcoming);
     events.sort((a, b) => {
@@ -456,7 +550,7 @@ function switchTab(tab) {
     btn.classList.toggle('active', btn.dataset.tab === tab);
   });
   var filterBar = document.getElementById('filter-bar');
-  if (filterBar) filterBar.style.display = (tab === 'all') ? '' : 'none';
+  if (filterBar) filterBar.style.display = (tab === 'all' || tab === 'poc') ? '' : 'none';
   var statsBar = document.getElementById('stats-bar');
   if (statsBar) statsBar.style.display = (tab === 'map') ? 'none' : '';
   var mapEl = document.getElementById('map-container');
